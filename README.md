@@ -6,6 +6,7 @@ A Leaflet Plugin that renders Mapbox Vector Tiles on HTML5 Canvas.
 ## Examples
 
 [Basic Usage](http://spatialserver.github.io/Leaflet.MapboxVectorTile/examples/basic.html)
+
 [Statically Placed Labels](http://spatialserver.github.io/Leaflet.MapboxVectorTile/examples/static-label.html)
 
 ## Getting Started
