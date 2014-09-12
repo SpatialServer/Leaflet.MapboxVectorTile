@@ -1,0 +1,31 @@
+{
+  "name": "Leaflet.MapboxVectorTile",
+  "version": "0.0.1",
+  "description": "A Leaflet Plugin that renders Mapbox Vector Tiles on HTML5 Canvas.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/SpatialServer/Leaflet.PBFLayer.git"
+  },
+  "keywords": [
+    "pbf",
+    "vector",
+    "tiles",
+    "vector-tiles",
+    "leaflet"
+  ],
+  "author": "Nicholas Hallahan, Ryan Whitley, Daniel Duarte",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SpatialServer/Leaflet.MapboxVectorTile/issues"
+  },
+  "homepage": "https://github.com/SpatialServer/Leaflet.MapboxVectorTile",
+  "dependencies": {
+    "vector-tile": "~0.1.2",
+    "pbf": "0.0.2",
+    "point-geometry": "0.0.0"
+  }
+}

@@ -1,0 +1,371 @@
+<html>
+<head>
+    <title>PBFLayer List</title>
+    <meta charset="utf-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="../lib/Leaflet/leaflet-0.7.3/leaflet.css"/>
+    <link rel="stylesheet" href="css/LayerList.css"/>
+    <link rel="stylesheet" href="../src/DynamicLabel/label.css"/>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font: 12px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        #style-ui {
+            position: absolute;
+            top: 100px;
+            left: 100px;
+            height: 300px;
+            width: 300px;
+            z-index: 1;
+            background-color: #fff;
+            display: none;
+        }
+
+        /* info block */
+        .rotate {
+            -webkit-transform: rotate(270deg);
+            -moz-transform: rotate(270deg);
+            -ms-transform: rotate(270deg);
+            -o-transform: rotate(270deg);
+            transform: rotate(270deg);
+            -webkit-transform-origin: 50% 50%;
+            -moz-transform-origin: 50% 50%;
+            -ms-transform-origin: 50% 50%;
+            -o-transform-origin: 50% 50%;
+            transform-origin: 50% 50%;
+        }
+
+        .stack {
+            margin: 20px -8px;
+        }
+
+        .trigger {
+            z-index: 2000;
+            position: absolute;
+            right: 0px;
+            top: 50%;
+            margin-top: -54px;
+            -moz-border-radius: 5px 0 0 5px;
+            -webkit-border-radius: 5px 0 0 5px;
+            border-radius: 5px 0 0 5px;
+            cursor: pointer;
+            background-color: white;
+            text-transform: uppercase;
+        }
+
+        .block {
+            z-index: 2000;
+            position: absolute;
+            right: -300px;
+            width: 270px;
+            height: 100%;
+            background-color: white;
+            padding: 0 15px;
+            overflow-y: auto;
+        }
+
+        .input-label {
+            margin-top: 15px;
+        }
+
+        .round-it {
+            -webkit-border-radius: 3px;
+            -moz-border-radius: 3px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+<div id="map" class="leaflet-container leaflet-fade-anim" tabindex="0"></div>
+<div class="block">
+    <div class="input-label">Vector Tiles Style:</div>
+    <input id="cssFill" type="text" placeholder="#523422"/>
+    <input id="cssStroke" type="text" placeholder="#ff3322"/>
+    <input type="button" value="Update" onclick="updateStyle()"/>
+    <br>
+    <br>
+    <br>
+    <input type="button" value="Update Layer list" onclick="loadLayers()"/>
+
+    <div id="layerList">
+
+    </div>
+    <br>
+    <br>
+    <br>
+
+    <div id="idResults">
+
+    </div>
+    <input type="button" value="Remove PBFLayer" onclick="removePBFLayer()"/>
+
+</div>
+<div class="trigger">
+    <div class="stack rotate">
+        style
+    </div>
+</div>
+
+<script src="../lib/Leaflet/leaflet-0.7.3/leaflet-src.js"></script>
+<script src="../lib/vectortile/vectortilelayer.js"></script>
+<script src="../lib/vectortile/vectortilefeature.js"></script>
+<script src="../lib/vectortile/vectortile.js"></script>
+<script src="../lib/vectortile/pbf/ieee/ieee.js"></script>
+<script src="../lib/vectortile/pbf/pbf.js"></script>
+<script src="../lib/vectortile/point.js"></script>
+
+
+<script src="../lib/jQuery/jQuery-2.1.1.min.js"></script>
+<script src="../lib/Buffer/browser-buffer.min.js"></script>
+
+<script src="scripts/Leaflet.PBFLayer/TileLayer.PBFSource.js"></script>
+<script src="scripts/Leaflet.PBFLayer/TileLayer.PBFLayer.js"></script>
+<script src="../src/PBFFeature.js"></script>
+
+<script src="../src/DynamicLabel/Feature.js"></script>
+<script src="../src/DynamicLabel/DynamicLabel.js"></script>
+
+
+<script>
+var debug = {};
+
+// panel
+var open = 0;
+$(".trigger").click(function() {
+    if (open == 0) {
+        //$('#start-input').focus();
+        $(".trigger").animate({ "right": "+=300px" }, "fast");
+        $(".block").animate({ "right": "+=300px" }, "fast", function() {
+            $('#start-input').focus();
+        });
+
+        open = 1;
+    }
+    else if (open == 1) {
+        $(".block").animate({ "right": "-=300px" }, "fast");
+        $(".trigger").animate({ "right": "-=300px" }, "fast");
+        open = 0;
+    }
+});
+
+var map = L.map('map').setView([-5,27.4], 5); // africa
+//    var map = L.map('map').setView([19.6,-155.4], 8); // hawaii
+
+L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+            '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+            'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+    id: 'examples.map-i86knfo3'
+}).addTo(map);
+
+
+var pbfSource = new L.TileLayer.PBFSource({
+    url: "http://localhost:3001/services/vector-tiles/GADM/{z}/{x}/{y}.pbf",
+//        url: "https://a.tiles.mapbox.com/v3/mapbox.mapbox-terrain-v1,mapbox.mapbox-streets-v5/{z}/{x}/{y}.vector.pbf",
+    debug: true,
+    clickableLayers: ["gadm0"],
+    getIDForLayerFeature: function(feature) {
+        switch (feature.layer.name) {
+            case "gadm0":
+                return feature.properties.id_0;
+
+            case "gadm1":
+                return feature.properties.id_0 + "-" + feature.properties.id_1;
+
+            case "gadm2":
+                return feature.properties.id_0 + "-" + feature.properties.id_1 + "-" + feature.properties.id_2;
+        }
+        return "";
+    },
+
+    /**
+     * The filter function gets called when iterating though each vector tile feature (vtf). You have access
+     * to every property associated with a given feature (the feature, and the layer). You can also filter
+     * based of the context (each tile that the feature is drawn onto).
+     *
+     * Returning false skips over the feature and it is not drawn.
+     *
+     * @param feature
+     * @returns {boolean}
+     */
+    filter: function(feature, context) {
+        if (feature.layer.name === 'gadm0') {
+            return true;
+        }
+//            if (feature.layer.name === 'gadm0' && (context.id === '5:17:16' || context.id === '5:18:16')) { // Democratic Republic of the Congo
+//                if (feature.properties.id_0 === 62) {
+//                    return true;
+//                }
+//            }
+        return false;
+    }
+});
+debug.pbfSource = pbfSource;
+
+//Globals that we can change later.
+var fillColor = 'rgba(149,139,255,0.4)';
+var strokeColor = 'rgb(20,20,20)';
+
+pbfSource.styleFor = pbfStyle;
+
+function pbfStyle(feature) {
+    var style = {};
+
+    var type = feature.type;
+    switch (type) {
+        case 1: //'Point'
+            style.color = 'rgba(252,146,114,0.6)';
+            style.radius = 5;
+
+        case 2: //'LineString'
+            style.color = 'rgba(161,217,155,0.8)';
+            style.size = 3;
+
+        case 3: //'Polygon'
+            style.color = fillColor;
+            style.outline = {
+                color: strokeColor,
+                size: 2
+            };
+    }
+
+    if (feature.layer.name === 'gadm0') {
+        style.dynamicLabel = function() {
+            var style = {
+                html: feature.properties.name_0,
+                iconSize: [100,100],
+                cssClass: 'label-icon-text'
+            };
+            return style;
+        };
+    }
+
+    return style;
+}
+
+function pbfSelectedStyle(vectorTileFeature) {
+    var type = vectorTileFeature.type;
+    switch (type) {
+        case 1: //'Point'
+            return {
+                color: 'rgba(255,255,0,0.5)',
+                radius: 5
+            };
+            break;
+        case 2: //'LineString'
+            return {
+                color: 'rgba(255,25,0,0.5)',
+                size: 3
+            };
+            break;
+        case 3: //'Polygon'
+            return {
+                color: 'rgba(255,140,0,0.3)',
+                outline: {
+                    color: 'rgba(255,140,0,1)',
+                    size: 1
+                }
+            };
+            break;
+        default:
+            return null;
+    }
+}
+
+map.on("click", function(e) {
+    //Take the click event and pass it to the group layers.
+
+    pbfSource.onClick(e, function (evt) {
+        if (evt && evt.feature) {
+            //alert("Clicked Country: " + evt.feature.name_0);
+            $("#idResults").html("Clicked Country: " + evt.feature.properties.name_0);
+
+            evt.feature.isSelected = !evt.feature.isSelected;
+
+            var style;
+            if (evt.feature.isSelected === true) {
+                //Set selected style
+                style = pbfSelectedStyle(evt.feature);
+            }
+            else {
+                //return to normal color
+                style = pbfStyle(evt.feature);
+            }
+
+            //set it - this triggers an auto tile redraw
+            evt.feature.setStyle(style);
+        }
+
+    });
+});
+
+map.on("layerremove", function(removed){
+    //This is the layer that was removed.
+    //If it is a TileLayer.PBFSource, then call a method to actually remove the children, too.
+    if(removed.layer.removeChildLayers){
+        removed.layer.removeChildLayers(map);
+    }
+});
+
+//Add layer
+map.addLayer(pbfSource);
+
+
+function loadLayers() {
+    //Load layer list
+    var layers = pbfSource.getLayers();
+    var layerIds = Object.keys(layers);
+
+    layerIds.forEach(function(key, idx){
+        //var key = layerIds[idx];
+        //loop thru layers and list them in the panel
+        var layer = layers[key];
+        var row = $('<div class="VTSubLayer"><label class="checkbox">' + key + '</label></div>').appendTo($("#layerList"));
+        var cBox = $('<input type="checkbox" checked="checked" value="all">').appendTo(row);
+
+        cBox.on("click", function(evt) {
+            //Toggle layer visiblity
+            if (layer.visible == true) {
+                pbfSource.hideLayer(key);
+            }
+            else {
+                pbfSource.showLayer(key);
+                pbfSource.redraw();
+            }
+        });
+    })
+}
+
+function removePBFLayer(){
+    map.removeLayer(pbfSource);
+}
+
+function updateStyle() {
+    var cssFill = $("#cssFill").val();
+    var cssStroke = $("#cssStroke").val();
+
+    if (cssFill) fillColor = cssFill;
+    if (cssStroke) strokeColor = cssStroke;
+    pbfLayerGroup.redraw();
+}
+
+
+
+</script>
+
+
+</body>
+</html>
