@@ -32,7 +32,7 @@ L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery
 }).addTo(map);
 
 
-var pbfSource = new L.TileLayer.MVTSource({
+var mvtSource = new L.TileLayer.MVTSource({
   url: "http://spatialserver.spatialdev.com/services/vector-tiles/gadm2014kenya/{z}/{x}/{y}.pbf",
   debug: true,
   clickableLayers: ['gadm0', 'gadm1', 'gadm2', 'gadm3', 'gadm4', 'gadm5'],
@@ -87,21 +87,21 @@ var pbfSource = new L.TileLayer.MVTSource({
     }
   },
 
-  styleFor: pbfStyle
+  styleFor: mvtStyle
 });
-debug.mvtSource = pbfSource;
+debug.mvtSource = mvtSource;
 
 //Globals that we can change later.
 var fillColor = 'rgba(149,139,255,0.4)';
 var strokeColor = 'rgb(20,20,20)';
 
 
-function pbfStyle(feature) {
+function mvtStyle(feature) {
   var style = {};
   var selected = style.selected = {};
   var pointRadius = 1;
 
-  function ScaleDependentPointRadius(zoom){
+  function scaleDependentPointRadius(zoom){
     //Set point radius based on zoom
     var pointRadius = 1;
     if(zoom >= 0 && zoom <= 7){
@@ -346,7 +346,7 @@ map.on("click", function(e) {
 
 
   //Pass to mouseover for now.
-  pbfSource.onMouseOver(e, function(evt){
+  mvtSource.onMouseOver(e, function(evt){
     alert("got it.");
   });
 
@@ -367,18 +367,18 @@ map.on("layerremove", function(removed){
   }
 });
 
-pbfSource.bind("PBFLoad", function(){
+mvtSource.bind("PBFLoad", function(){
   //Fired when all PBFs have been processed and map has finished rendering.
   console.log("done rendering.");
 });
 
 //Add layer
-map.addLayer(pbfSource);
+map.addLayer(mvtSource);
 
 
 function loadLayers() {
   //Load layer list
-  var layers = pbfSource.getLayers();
+  var layers = mvtSource.getLayers();
   var layerIds = Object.keys(layers);
 
   layerIds.forEach(function(key, idx){
@@ -391,18 +391,18 @@ function loadLayers() {
     cBox.on("click", function(evt) {
       //Toggle layer visiblity
       if (layer.visible == true) {
-        pbfSource.hideLayer(key);
+        mvtSource.hideLayer(key);
       }
       else {
-        pbfSource.showLayer(key);
-        pbfSource.redraw();
+        mvtSource.showLayer(key);
+        mvtSource.redraw();
       }
     });
   })
 }
 
 function removePBFLayer(){
-  map.removeLayer(pbfSource);
+  map.removeLayer(mvtSource);
 }
 
 function updateStyle() {

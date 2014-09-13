@@ -23,7 +23,8 @@
   "dependencies": {
     "vector-tile": "~0.1.2",
     "pbf": "0.0.2",
-    "point-geometry": "0.0.0"
+    "point-geometry": "0.0.0",
+    "leaflet": "0.7.3"
   },
   "devDependencies": {
     "browserify": "~5.9.1",

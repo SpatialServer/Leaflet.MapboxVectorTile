@@ -2,11 +2,11 @@
  * Created by Ryan Whitley on 5/17/14.
  */
 /** Forked from https://gist.github.com/DGuidi/1716010 **/
-
+var L = require('leaflet');
 var MVTFeature = require('./MVTFeature');
 var Util = require('./MVTUtil');
 
-module.exports = L.TileLayer.MVTLayer = L.TileLayer.Canvas.extend({
+module.exports = L.TileLayer.Canvas.extend({
 
   options: {
     debug: false,
@@ -115,7 +115,7 @@ module.exports = L.TileLayer.MVTLayer = L.TileLayer.Canvas.extend({
 
     var features = vtl.parsedFeatures;
     for (var i = 0, len = features.length; i < len; i++) {
-      var vtf = features[i] //vector tile feature
+      var vtf = features[i]; //vector tile feature
       vtf.layer = vtl;
 
       /**

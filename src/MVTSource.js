@@ -1,10 +1,11 @@
+var L = require('leaflet');
 var VectorTile = require('vector-tile').VectorTile;
 var Protobuf = require('pbf');
 var Point = require('point-geometry');
 
 var Util = require('./MVTUtil');
-L.TileLayer.MVTLayer = require('./MVTLayer');
-L.TileLayer.MVTPointLayer = require('./MVTPointLayer');
+var MVTLayer = require('./MVTLayer');
+var MVTPointLayer = require('./MVTPointLayer');
 
 
 module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
@@ -219,7 +220,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 //      }).addTo(self._map);
 //    }else{
       //Polygon/Line Layer
-      layer = new L.TileLayer.MVTLayer(self, {
+      layer = new MVTLayer(self, {
         getIDForLayerFeature: getIDForLayerFeature,
         filter: self.options.filter,
         layerOrdering: self.options.layerOrdering,
