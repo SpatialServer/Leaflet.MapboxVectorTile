@@ -1,3 +1,28 @@
+############## generic files to ignore #######
+*~
+*.lock
+*.DS_Store
+*.swp
+*.out
+
+############## Mac Stuff #####################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+############## Jetbrains Stuff ###############
+*.iws
+workspace.xml
+tasks.xml
+*.iml
+.idea/
+
+############## NodeJS Stuff ##################
+
 # Logs
 logs
 *.log
@@ -19,10 +44,4 @@ coverage
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
 
-# Dependency directory
-# Commenting this out is preferred by some people, see
-# https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git-
 node_modules
-
-# Users Environment Variables
-.lock-wscript
