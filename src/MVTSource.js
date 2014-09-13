@@ -1,11 +1,8 @@
 var VectorTile = require('vector-tile').VectorTile;
-var VectorTileFeature = require('vector-tile').VectorTileFeature;
-var VectorTileLayer = require('vector-tile').VectorTileLayer;
 var Protobuf = require('pbf');
 var Point = require('point-geometry');
 
 var Util = require('./MVTUtil');
-var PBFFeature = require('./MVTFeature');
 L.TileLayer.MVTLayer = require('./MVTLayer');
 L.TileLayer.MVTPointLayer = require('./MVTPointLayer');
 
@@ -149,7 +146,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
     xhr.onerror = function() {
       console.log("xhr error: " + xhr.errorCode)
-    }
+    };
 
     xhr.open('GET', url, true); //async is true
     xhr.responseType = 'arraybuffer';

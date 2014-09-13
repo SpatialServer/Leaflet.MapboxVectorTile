@@ -27,9 +27,9 @@ module.exports = L.TileLayer.MVTPointLayer = L.TileLayer.Canvas.extend({
     }
   },
 
-  initialize: function(pbfSource, options) {
+  initialize: function(mvtSource, options) {
     var self = this;
-    self.pbfSource = pbfSource;
+    self.mvtSource = mvtSource;
     L.Util.setOptions(this, options);
 
     this.styleFor = options.styleFor;
@@ -220,8 +220,8 @@ module.exports = L.TileLayer.MVTPointLayer = L.TileLayer.Canvas.extend({
   },
 
   linkedLayer: function() {
-    var linkName = this.pbfSource.layerLink(this.name);
-    return this.pbfSource.layers[linkName];
+    var linkName = this.mvtSource.layerLink(this.name);
+    return this.mvtSource.layers[linkName];
   },
 
   drawPoint: function(ctx, coordsArray, style) {

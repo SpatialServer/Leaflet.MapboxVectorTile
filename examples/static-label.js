@@ -89,7 +89,7 @@ var pbfSource = new L.TileLayer.MVTSource({
 
   styleFor: pbfStyle
 });
-debug.pbfSource = pbfSource;
+debug.mvtSource = pbfSource;
 
 //Globals that we can change later.
 var fillColor = 'rgba(149,139,255,0.4)';
@@ -350,7 +350,7 @@ map.on("click", function(e) {
     alert("got it.");
   });
 
-//  pbfSource.onClick(e, function (evt) {
+//  mvtSource.onClick(e, function (evt) {
 //    if (evt && evt.feature) {
 //      //alert("Clicked Country: " + evt.feature.name_0);
 //      $("#idResults").html("Clicked Country: " + evt.feature.properties.name_0);

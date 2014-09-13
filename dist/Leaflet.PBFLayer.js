@@ -801,13 +801,13 @@ function PBFFeature(pbfLayer, vtf, ctx, id, style) {
     this[key] = vtf[key];
   }
 
-  this.pbfLayer = pbfLayer;
-  this.pbfSource = pbfLayer.pbfSource;
-  this.map = pbfLayer.pbfSource._map;
+  this.mvtLayer = pbfLayer;
+  this.mvtSource = pbfLayer.mvtSource;
+  this.map = pbfLayer.mvtSource._map;
 
   this.id = id;
 
-  this.layerLink = this.pbfSource.layerLink;
+  this.layerLink = this.mvtSource.layerLink;
   this.toggleEnabled = true;
   this.selected = false;
 
@@ -830,7 +830,7 @@ function PBFFeature(pbfLayer, vtf, ctx, id, style) {
   this.addTileFeature(vtf, ctx);
 
   if (typeof style.dynamicLabel === 'function') {
-    this.featureLabel = this.pbfSource.dynamicLabel.createFeature(this);
+    this.featureLabel = this.mvtSource.dynamicLabel.createFeature(this);
   }
 }
 
@@ -1066,7 +1066,7 @@ PBFFeature.prototype._tilePoint = function(coords) {
 };
 
 PBFFeature.prototype.linkedFeature = function() {
-  var linkedLayer = this.pbfLayer.linkedLayer();
+  var linkedLayer = this.mvtLayer.linkedLayer();
   var linkedFeature = linkedLayer.features[this.id];
   return linkedFeature;
 };
@@ -1102,7 +1102,7 @@ module.exports = L.TileLayer.MVTLayer = L.TileLayer.Canvas.extend({
 
   initialize: function(pbfSource, options) {
     var self = this;
-    self.pbfSource = pbfSource;
+    self.mvtSource = pbfSource;
     L.Util.setOptions(this, options);
 
     this.styleFor = options.styleFor;
@@ -1322,8 +1322,8 @@ module.exports = L.TileLayer.MVTLayer = L.TileLayer.Canvas.extend({
   },
 
   linkedLayer: function() {
-    var linkName = this.pbfSource.layerLink(this.name);
-    return this.pbfSource.layers[linkName];
+    var linkName = this.mvtSource.layerLink(this.name);
+    return this.mvtSource.layers[linkName];
   }
 
 });
@@ -1397,7 +1397,7 @@ module.exports = L.TileLayer.MVTPointLayer = L.TileLayer.Canvas.extend({
 
   initialize: function(pbfSource, options) {
     var self = this;
-    self.pbfSource = pbfSource;
+    self.mvtSource = pbfSource;
     L.Util.setOptions(this, options);
 
     this.styleFor = options.styleFor;
@@ -1588,8 +1588,8 @@ module.exports = L.TileLayer.MVTPointLayer = L.TileLayer.Canvas.extend({
   },
 
   linkedLayer: function() {
-    var linkName = this.pbfSource.layerLink(this.name);
-    return this.pbfSource.layers[linkName];
+    var linkName = this.mvtSource.layerLink(this.name);
+    return this.mvtSource.layers[linkName];
   },
 
   drawPoint: function(ctx, coordsArray, style) {

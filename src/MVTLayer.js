@@ -27,9 +27,9 @@ module.exports = L.TileLayer.MVTLayer = L.TileLayer.Canvas.extend({
     }
   },
 
-  initialize: function(pbfSource, options) {
+  initialize: function(mvtSource, options) {
     var self = this;
-    self.pbfSource = pbfSource;
+    self.mvtSource = mvtSource;
     L.Util.setOptions(this, options);
 
     this.styleFor = options.styleFor;
@@ -134,28 +134,28 @@ module.exports = L.TileLayer.MVTLayer = L.TileLayer.Canvas.extend({
         getIDForLayerFeature = Util.getIDForLayerFeature;
       }
       var uniqueID = self.options.getIDForLayerFeature(vtf) || i;
-      var pbffeature = self.features[uniqueID];
+      var mvtFeature = self.features[uniqueID];
 
       //Create a new MVTFeature if one doesn't already exist for this feature.
-      if (!pbffeature) {
+      if (!mvtFeature) {
         //Get a style for the feature - set it just once for each new MVTFeature
         var style = self.styleFor(vtf);
 
         //create a new feature
-        self.features[uniqueID] = pbffeature = new MVTFeature(self, vtf, ctx, uniqueID, style, this._map);
+        self.features[uniqueID] = mvtFeature = new MVTFeature(self, vtf, ctx, uniqueID, style, this._map);
         if (typeof style.dynamicLabel === 'function') {
-          self.featuresWithLabels.push(pbffeature);
+          self.featuresWithLabels.push(mvtFeature);
         }
       } else {
         //Add the new part to the existing feature
-        pbffeature.addTileFeature(vtf, ctx);
+        mvtFeature.addTileFeature(vtf, ctx);
       }
 
       //Associate & Save this feature with this tile for later
-      if(ctx && ctx.id) self._canvasIDToFeaturesForZoom[ctx.id]['features'].push(pbffeature);
+      if(ctx && ctx.id) self._canvasIDToFeaturesForZoom[ctx.id]['features'].push(mvtFeature);
 
       //Subscribe to style changes for feature
-      pbffeature.on("styleChanged", function(parts) {
+      mvtFeature.on("styleChanged", function(parts) {
         //Redraw the whole tile, not just this vtf
         var zoom = self._map._zoom;
 
@@ -171,7 +171,7 @@ module.exports = L.TileLayer.MVTLayer = L.TileLayer.Canvas.extend({
       });
 
       //Tell it to draw
-      //pbffeature.draw(vtf, ctx);
+      //mvtFeature.draw(vtf, ctx);
     }
 
     //If a z-order function is specified, wait unitl all features have been iterated over until drawing (here)
@@ -249,8 +249,8 @@ module.exports = L.TileLayer.MVTLayer = L.TileLayer.Canvas.extend({
   },
 
   linkedLayer: function() {
-    var linkName = this.pbfSource.layerLink(this.name);
-    return this.pbfSource.layers[linkName];
+    var linkName = this.mvtSource.layerLink(this.name);
+    return this.mvtSource.layers[linkName];
   }
 
 });

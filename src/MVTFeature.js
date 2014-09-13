@@ -7,20 +7,20 @@ var StaticLabel = require('./StaticLabel/StaticLabel.js');
 
 module.exports = MVTFeature;
 
-function MVTFeature(pbfLayer, vtf, ctx, id, style) {
+function MVTFeature(mvtLayer, vtf, ctx, id, style) {
   if (!vtf) return null;
 
   for (var key in vtf) {
     this[key] = vtf[key];
   }
 
-  this.pbfLayer = pbfLayer;
-  this.pbfSource = pbfLayer.pbfSource;
-  this.map = pbfLayer.pbfSource._map;
+  this.mvtLayer = mvtLayer;
+  this.mvtSource = mvtLayer.mvtSource;
+  this.map = mvtLayer.mvtSource._map;
 
   this.id = id;
 
-  this.layerLink = this.pbfSource.layerLink;
+  this.layerLink = this.mvtSource.layerLink;
   this.toggleEnabled = true;
   this.selected = false;
 
@@ -43,7 +43,7 @@ function MVTFeature(pbfLayer, vtf, ctx, id, style) {
   this.addTileFeature(vtf, ctx);
 
   if (typeof style.dynamicLabel === 'function') {
-    this.featureLabel = this.pbfSource.dynamicLabel.createFeature(this);
+    this.featureLabel = this.mvtSource.dynamicLabel.createFeature(this);
   }
 }
 
@@ -279,7 +279,7 @@ MVTFeature.prototype._tilePoint = function(coords) {
 };
 
 MVTFeature.prototype.linkedFeature = function() {
-  var linkedLayer = this.pbfLayer.linkedLayer();
+  var linkedLayer = this.mvtLayer.linkedLayer();
   var linkedFeature = linkedLayer.features[this.id];
   return linkedFeature;
 };

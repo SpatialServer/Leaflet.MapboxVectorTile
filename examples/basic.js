@@ -43,7 +43,7 @@
             return true;
         }
     });
-    debug.pbfSource = pbfSource;
+    debug.mvtSource = pbfSource;
 
     //Globals that we can change later.
     var fillColor = 'rgba(149,139,255,0.4)';

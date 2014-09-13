@@ -20,4 +20,3 @@ Util.getContextID = function(ctx) {
 Util.getIDForLayerFeature = function(feature) {
   return feature.properties.id;
 };
-
