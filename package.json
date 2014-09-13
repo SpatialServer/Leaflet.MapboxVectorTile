@@ -3,12 +3,9 @@
   "version": "0.0.1",
   "description": "A Leaflet Plugin that renders Mapbox Vector Tiles on HTML5 Canvas.",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
-    "url": "git://github.com/SpatialServer/Leaflet.PBFLayer.git"
+    "url": "git://github.com/SpatialServer/Leaflet.MapboxVectorTile.git"
   },
   "keywords": [
     "pbf",
@@ -35,7 +32,7 @@
   },
   "scripts": {
     "start": "npm run watch & serve",
-    "watch": "watchify -v -d src/PBFSource.js -o dist/Leaflet.MapboxVectorTile.js",
-    "build": "browserify -d jsrc/PBFSource.js -o dist/Leaflet.MapboxVectorTile.js"
+    "watch": "watchify -v -d src/MVTSource.js -o dist/Leaflet.MapboxVectorTile.js",
+    "build": "browserify -d jsrc/MVTSource.js -o dist/Leaflet.MapboxVectorTile.js"
   }
 }

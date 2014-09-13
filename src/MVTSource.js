@@ -4,13 +4,13 @@ var VectorTileLayer = require('vector-tile').VectorTileLayer;
 var Protobuf = require('pbf');
 var Point = require('point-geometry');
 
-var Util = require('./PBFUtil');
-var PBFFeature = require('./PBFFeature');
-L.TileLayer.PBFLayer = require('./PBFLayer');
-L.TileLayer.PBFPointLayer = require('./PBFPointLayer');
+var Util = require('./MVTUtil');
+var PBFFeature = require('./MVTFeature');
+L.TileLayer.MVTLayer = require('./MVTLayer');
+L.TileLayer.MVTPointLayer = require('./MVTPointLayer');
 
 
-module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
+module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
   options: {
     debug: false,
@@ -173,7 +173,7 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
     for (var key in vt.layers) {
       var lyr = vt.layers[key];
       if (!self.layers[key]) {
-        //Create PBFLayer or PBFPointLayer for user
+        //Create MVTLayer or MVTPointLayer for user
         self.layers[key] = self.createPBFLayer(key, lyr.parsedFeatures[0].type || null);
       }
 
@@ -207,12 +207,12 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
       getIDForLayerFeature = Util.getIDForLayerFeature;
     }
 
-    //Take the layer and create a new PBFLayer or PBFPointLayer if one doesn't exist.
+    //Take the layer and create a new MVTLayer or MVTPointLayer if one doesn't exist.
     var layer;
 
 //    if(type === 1){
 //      //Point Layer
-//      layer = new L.TileLayer.PBFPointLayer(self, {
+//      layer = new L.TileLayer.MVTPointLayer(self, {
 //        getIDForLayerFeature: getIDForLayerFeature,
 //        filter: self.options.filter,
 //        layerOrdering: self.options.layerOrdering,
@@ -222,7 +222,7 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
 //      }).addTo(self._map);
 //    }else{
       //Polygon/Line Layer
-      layer = new L.TileLayer.PBFLayer(self, {
+      layer = new L.TileLayer.MVTLayer(self, {
         getIDForLayerFeature: getIDForLayerFeature,
         filter: self.options.filter,
         layerOrdering: self.options.layerOrdering,
@@ -268,7 +268,7 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
   },
 
   onClick: function(evt, cb) {
-    //Here, pass the event on to the child PBFLayer and have it do the hit test and handle the result.
+    //Here, pass the event on to the child MVTLayer and have it do the hit test and handle the result.
     var self = this;
 
     evt.tileID =  getTileURL(evt.latlng.lat, evt.latlng.lng, this._map.getZoom());

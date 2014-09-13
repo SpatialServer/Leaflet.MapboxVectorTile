@@ -12,7 +12,7 @@ if (typeof require === 'function') {
 }
 
 /**
- * There should be one instance of Label per PBFSource.
+ * There should be one instance of Label per MVTSource.
  *
  * @param map
  * @param options

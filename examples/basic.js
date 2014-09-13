@@ -11,7 +11,7 @@
     }).addTo(map);
 
 
-    var pbfSource = new L.TileLayer.PBFSource({
+    var pbfSource = new L.TileLayer.MVTSource({
         url: "http://spatialserver.spatialdev.com/services/vector-tiles/GAUL_FSP/{z}/{x}/{y}.pbf",
         debug: true,
         clickableLayers: ["gadm2"],
@@ -135,7 +135,7 @@
 
     map.on("layerremove", function(removed){
         //This is the layer that was removed.
-        //If it is a TileLayer.PBFSource, then call a method to actually remove the children, too.
+        //If it is a TileLayer.MVTSource, then call a method to actually remove the children, too.
         if(removed.layer.removeChildLayers){
             removed.layer.removeChildLayers(map);
         }

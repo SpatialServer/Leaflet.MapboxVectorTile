@@ -54,4 +54,4 @@ StaticLabel.prototype.deselect = function() {
   this.marker._icon.classList.remove('label-icon-text-selected');
   var linkedFeature = this.pbfFeature.linkedFeature();
   if (linkedFeature.selected) linkedFeature.deselect();
-  };
+};

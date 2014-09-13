@@ -3,10 +3,10 @@
  */
 /** Forked from https://gist.github.com/DGuidi/1716010 **/
 
-var PBFFeature = require('./PBFFeature');
-var Util = require('./PBFUtil');
+var MVTFeature = require('./MVTFeature');
+var Util = require('./MVTUtil');
 
-module.exports = L.TileLayer.PBFLayer = L.TileLayer.Canvas.extend({
+module.exports = L.TileLayer.MVTLayer = L.TileLayer.Canvas.extend({
 
   options: {
     debug: false,
@@ -66,7 +66,7 @@ module.exports = L.TileLayer.PBFLayer = L.TileLayer.Canvas.extend({
   },
 
   _draw: function(ctx) {
-    //Draw is handled by the parent PBFSource object
+    //Draw is handled by the parent MVTSource object
   },
   getCanvas: function(parentCtx){
     //This gets called if a vector tile feature has already been parsed.
@@ -120,7 +120,7 @@ module.exports = L.TileLayer.PBFLayer = L.TileLayer.Canvas.extend({
 
       /**
        * Apply filter on feature if there is one. Defined in the options object
-       * of TileLayer.PBFSource.js
+       * of TileLayer.MVTSource.js
        */
       var filter = self.options.filter;
       if (typeof filter === 'function') {
@@ -136,13 +136,13 @@ module.exports = L.TileLayer.PBFLayer = L.TileLayer.Canvas.extend({
       var uniqueID = self.options.getIDForLayerFeature(vtf) || i;
       var pbffeature = self.features[uniqueID];
 
-      //Create a new PBFFeature if one doesn't already exist for this feature.
+      //Create a new MVTFeature if one doesn't already exist for this feature.
       if (!pbffeature) {
-        //Get a style for the feature - set it just once for each new PBFFeature
+        //Get a style for the feature - set it just once for each new MVTFeature
         var style = self.styleFor(vtf);
 
         //create a new feature
-        self.features[uniqueID] = pbffeature = new PBFFeature(self, vtf, ctx, uniqueID, style, this._map);
+        self.features[uniqueID] = pbffeature = new MVTFeature(self, vtf, ctx, uniqueID, style, this._map);
         if (typeof style.dynamicLabel === 'function') {
           self.featuresWithLabels.push(pbffeature);
         }

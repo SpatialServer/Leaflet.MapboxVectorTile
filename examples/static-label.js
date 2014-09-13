@@ -32,9 +32,8 @@ L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery
 }).addTo(map);
 
 
-var pbfSource = new L.TileLayer.PBFSource({
+var pbfSource = new L.TileLayer.MVTSource({
   url: "http://spatialserver.spatialdev.com/services/vector-tiles/gadm2014kenya/{z}/{x}/{y}.pbf",
-//        url: "https://a.tiles.mapbox.com/v3/mapbox.mapbox-terrain-v1,mapbox.mapbox-streets-v5/{z}/{x}/{y}.vector.pbf",
   debug: true,
   clickableLayers: ['gadm0', 'gadm1', 'gadm2', 'gadm3', 'gadm4', 'gadm5'],
 
@@ -79,7 +78,7 @@ var pbfSource = new L.TileLayer.PBFSource({
   /**
    * Specify which features should have a certain z index (integer).  Lower numbers will draw on 'the bottom'.
    *
-   * @param feature - the PBFFeature that contains properties
+   * @param feature - the MVTFeature that contains properties
    */
   layerOrdering: function(feature){
     //This only needs to be done for each type, not necessarily for each feature. But we'll start here.
@@ -362,7 +361,7 @@ map.on("click", function(e) {
 
 map.on("layerremove", function(removed){
   //This is the layer that was removed.
-  //If it is a TileLayer.PBFSource, then call a method to actually remove the children, too.
+  //If it is a TileLayer.MVTSource, then call a method to actually remove the children, too.
   if(removed.layer.removeChildLayers){
     removed.layer.removeChildLayers(map);
   }

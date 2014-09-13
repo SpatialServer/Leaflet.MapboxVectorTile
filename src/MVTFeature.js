@@ -5,9 +5,9 @@
 
 var StaticLabel = require('./StaticLabel/StaticLabel.js');
 
-module.exports = PBFFeature;
+module.exports = MVTFeature;
 
-function PBFFeature(pbfLayer, vtf, ctx, id, style) {
+function MVTFeature(pbfLayer, vtf, ctx, id, style) {
   if (!vtf) return null;
 
   for (var key in vtf) {
@@ -47,7 +47,7 @@ function PBFFeature(pbfLayer, vtf, ctx, id, style) {
   }
 }
 
-PBFFeature.prototype.draw = function(vtf, ctx) {
+MVTFeature.prototype.draw = function(vtf, ctx) {
   if (this.selected) {
     var style = this.style.selected || this.style;
   } else {
@@ -76,12 +76,12 @@ PBFFeature.prototype.draw = function(vtf, ctx) {
 
 };
 
-PBFFeature.prototype.getPathsForTile = function(canvasID, zoom) {
+MVTFeature.prototype.getPathsForTile = function(canvasID, zoom) {
   //Get the info from the parts list
   return this.tiles[zoom][canvasID].paths;
 };
 
-PBFFeature.prototype.addTileFeature = function(vtf, ctx) {
+MVTFeature.prototype.addTileFeature = function(vtf, ctx) {
 
   //Store the parts of the feature for a particular zoom level
   var zoom = ctx.zoom;
@@ -96,18 +96,18 @@ PBFFeature.prototype.addTileFeature = function(vtf, ctx) {
 };
 
 
-PBFFeature.prototype.getTileInfo = function(canvasID, zoom) {
+MVTFeature.prototype.getTileInfo = function(canvasID, zoom) {
   //Get the info from the parts list
   return this.tiles[zoom][canvasID];
 };
 
-PBFFeature.prototype.setStyle = function(style) {
+MVTFeature.prototype.setStyle = function(style) {
   //Set this feature's style and redraw all canvases that this thing is a part of
   this.style = style;
   this._eventHandlers["styleChanged"](this.tiles);
 };
 
-PBFFeature.prototype.toggle = function() {
+MVTFeature.prototype.toggle = function() {
   if (this.selected) {
     this.deselect();
   } else {
@@ -115,7 +115,7 @@ PBFFeature.prototype.toggle = function() {
   }
 };
 
-PBFFeature.prototype.select = function() {
+MVTFeature.prototype.select = function() {
   this.selected = true;
   this._eventHandlers["styleChanged"](this.tiles);
   var linkedFeature = this.linkedFeature();
@@ -124,7 +124,7 @@ PBFFeature.prototype.select = function() {
   }
 };
 
-PBFFeature.prototype.deselect = function() {
+MVTFeature.prototype.deselect = function() {
   this.selected = false;
   this._eventHandlers["styleChanged"](this.tiles);
   var linkedFeature = this.linkedFeature();
@@ -133,11 +133,11 @@ PBFFeature.prototype.deselect = function() {
   }
 };
 
-PBFFeature.prototype.on = function(eventType, callback) {
+MVTFeature.prototype.on = function(eventType, callback) {
   this._eventHandlers[eventType] = callback;
 };
 
-PBFFeature.prototype._drawPoint = function(ctx, coordsArray, style) {
+MVTFeature.prototype._drawPoint = function(ctx, coordsArray, style) {
   if (!style) return;
 
   var part = this.tiles[ctx.zoom][ctx.id];
@@ -162,7 +162,7 @@ PBFFeature.prototype._drawPoint = function(ctx, coordsArray, style) {
   part.paths.push([p]);
 };
 
-PBFFeature.prototype._drawStaticLabel = function(ctx, coordsArray, style) {
+MVTFeature.prototype._drawStaticLabel = function(ctx, coordsArray, style) {
   if (!style) return;
 
   var vecPt = this._tilePoint(coordsArray[0][0]);
@@ -186,7 +186,7 @@ PBFFeature.prototype._drawStaticLabel = function(ctx, coordsArray, style) {
  * @param extent
  * @param tileSize
  */
-PBFFeature.prototype._project = function(vecPt, tileX, tileY, extent, tileSize) {
+MVTFeature.prototype._project = function(vecPt, tileX, tileY, extent, tileSize) {
   var xOffset = tileX * tileSize;
   var yOffset = tileY * tileSize;
   return {
@@ -195,7 +195,7 @@ PBFFeature.prototype._project = function(vecPt, tileX, tileY, extent, tileSize) 
   };
 };
 
-PBFFeature.prototype._drawLineString = function(ctx, coordsArray, style) {
+MVTFeature.prototype._drawLineString = function(ctx, coordsArray, style) {
   if (!style) return;
 
   var g = ctx.canvas.getContext('2d');
@@ -223,7 +223,7 @@ PBFFeature.prototype._drawLineString = function(ctx, coordsArray, style) {
   part.paths.push(projCoords);
 };
 
-PBFFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
+MVTFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
   if (!style) return;
   if (!ctx.canvas) return;
 
@@ -274,11 +274,11 @@ PBFFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
  * @returns {eGeomType.Point}
  * @private
  */
-PBFFeature.prototype._tilePoint = function(coords) {
+MVTFeature.prototype._tilePoint = function(coords) {
   return new L.Point(coords.x / this.divisor, coords.y / this.divisor);
 };
 
-PBFFeature.prototype.linkedFeature = function() {
+MVTFeature.prototype.linkedFeature = function() {
   var linkedLayer = this.pbfLayer.linkedLayer();
   var linkedFeature = linkedLayer.features[this.id];
   return linkedFeature;

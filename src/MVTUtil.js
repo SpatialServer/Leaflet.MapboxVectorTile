@@ -12,7 +12,7 @@ Util.getContextID = function(ctx) {
 /**
  * Default function that gets the id for a layer feature.
  * Sometimes this needs to be done in a different way and
- * can be specified by the user in the options for L.TileLayer.PBFSource.
+ * can be specified by the user in the options for L.TileLayer.MVTSource.
  *
  * @param feature
  * @returns {ctx.id|*|id|string|jsts.index.chain.MonotoneChain.id|number}

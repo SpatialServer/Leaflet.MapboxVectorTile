@@ -4,9 +4,9 @@
 /** Forked from https://gist.github.com/DGuidi/1716010 **/
 
 
-var Util = require('./PBFUtil');
+var Util = require('./MVTUtil');
 
-module.exports = L.TileLayer.PBFPointLayer = L.TileLayer.Canvas.extend({
+module.exports = L.TileLayer.MVTPointLayer = L.TileLayer.Canvas.extend({
 
   options: {
     debug: false,
@@ -59,7 +59,7 @@ module.exports = L.TileLayer.PBFPointLayer = L.TileLayer.Canvas.extend({
   },
 
   _draw: function(ctx) {
-    //Draw is handled by the parent PBFSource object
+    //Draw is handled by the parent MVTSource object
   },
   getCanvas: function(parentCtx, vtl){
     //Need a way to pluck a canvas element from this layer given the parent layer's id.
@@ -117,7 +117,7 @@ module.exports = L.TileLayer.PBFPointLayer = L.TileLayer.Canvas.extend({
 
       /**
        * Apply filter on feature if there is one. Defined in the options object
-       * of TileLayer.PBFSource.js
+       * of TileLayer.MVTSource.js
        */
       var filter = self.options.filter;
       if (typeof filter === 'function') {
@@ -133,7 +133,7 @@ module.exports = L.TileLayer.PBFPointLayer = L.TileLayer.Canvas.extend({
     //If a z-order function is specified, wait unitl all features have been iterated over until drawing (here)
     /**
      * Apply sorting (zIndex) on feature if there is a function defined in the options object
-     * of TileLayer.PBFSource.js
+     * of TileLayer.MVTSource.js
      */
     var layerOrdering = self.options.layerOrdering;
     if (layerOrdering) {

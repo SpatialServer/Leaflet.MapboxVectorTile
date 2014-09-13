@@ -1076,10 +1076,10 @@ PBFFeature.prototype.linkedFeature = function() {
  */
 /** Forked from https://gist.github.com/DGuidi/1716010 **/
 
-var PBFFeature = require('./PBFFeature');
+var PBFFeature = require('./MVTFeature');
 var Util = require('./PBFUtil');
 
-module.exports = L.TileLayer.PBFLayer = L.TileLayer.Canvas.extend({
+module.exports = L.TileLayer.MVTLayer = L.TileLayer.Canvas.extend({
 
   options: {
     debug: false,
@@ -1139,7 +1139,7 @@ module.exports = L.TileLayer.PBFLayer = L.TileLayer.Canvas.extend({
   },
 
   _draw: function(ctx) {
-    //Draw is handled by the parent PBFSource object
+    //Draw is handled by the parent MVTSource object
   },
   getCanvas: function(parentCtx){
     //This gets called if a vector tile feature has already been parsed.
@@ -1193,7 +1193,7 @@ module.exports = L.TileLayer.PBFLayer = L.TileLayer.Canvas.extend({
 
       /**
        * Apply filter on feature if there is one. Defined in the options object
-       * of TileLayer.PBFSource.js
+       * of TileLayer.MVTSource.js
        */
       var filter = self.options.filter;
       if (typeof filter === 'function') {
@@ -1209,9 +1209,9 @@ module.exports = L.TileLayer.PBFLayer = L.TileLayer.Canvas.extend({
       var uniqueID = self.options.getIDForLayerFeature(vtf) || i;
       var pbffeature = self.features[uniqueID];
 
-      //Create a new PBFFeature if one doesn't already exist for this feature.
+      //Create a new MVTFeature if one doesn't already exist for this feature.
       if (!pbffeature) {
-        //Get a style for the feature - set it just once for each new PBFFeature
+        //Get a style for the feature - set it just once for each new MVTFeature
         var style = self.styleFor(vtf);
 
         //create a new feature
@@ -1374,7 +1374,7 @@ function waitFor(testFx, onReady, timeOutMillis) {
 
 var Util = require('./PBFUtil');
 
-module.exports = L.TileLayer.PBFPointLayer = L.TileLayer.Canvas.extend({
+module.exports = L.TileLayer.MVTPointLayer = L.TileLayer.Canvas.extend({
 
   options: {
     debug: false,
@@ -1427,7 +1427,7 @@ module.exports = L.TileLayer.PBFPointLayer = L.TileLayer.Canvas.extend({
   },
 
   _draw: function(ctx) {
-    //Draw is handled by the parent PBFSource object
+    //Draw is handled by the parent MVTSource object
   },
   getCanvas: function(parentCtx, vtl){
     //Need a way to pluck a canvas element from this layer given the parent layer's id.
@@ -1485,7 +1485,7 @@ module.exports = L.TileLayer.PBFPointLayer = L.TileLayer.Canvas.extend({
 
       /**
        * Apply filter on feature if there is one. Defined in the options object
-       * of TileLayer.PBFSource.js
+       * of TileLayer.MVTSource.js
        */
       var filter = self.options.filter;
       if (typeof filter === 'function') {
@@ -1501,7 +1501,7 @@ module.exports = L.TileLayer.PBFPointLayer = L.TileLayer.Canvas.extend({
     //If a z-order function is specified, wait unitl all features have been iterated over until drawing (here)
     /**
      * Apply sorting (zIndex) on feature if there is a function defined in the options object
-     * of TileLayer.PBFSource.js
+     * of TileLayer.MVTSource.js
      */
     var layerOrdering = self.options.layerOrdering;
     if (layerOrdering) {
@@ -1672,12 +1672,12 @@ var Protobuf = require('pbf');
 var Point = require('point-geometry');
 
 var Util = require('./PBFUtil');
-var PBFFeature = require('./PBFFeature');
-L.TileLayer.PBFLayer = require('./PBFLayer');
-L.TileLayer.PBFPointLayer = require('./PBFPointLayer');
+var PBFFeature = require('./MVTFeature');
+L.TileLayer.MVTLayer = require('./MVTLayer');
+L.TileLayer.MVTPointLayer = require('./MVTPointLayer');
 
 
-module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
+module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
   options: {
     debug: false,
@@ -1840,7 +1840,7 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
     for (var key in vt.layers) {
       var lyr = vt.layers[key];
       if (!self.layers[key]) {
-        //Create PBFLayer or PBFPointLayer for user
+        //Create MVTLayer or MVTPointLayer for user
         self.layers[key] = self.createPBFLayer(key, lyr.parsedFeatures[0].type || null);
       }
 
@@ -1874,12 +1874,12 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
       getIDForLayerFeature = Util.getIDForLayerFeature;
     }
 
-    //Take the layer and create a new PBFLayer or PBFPointLayer if one doesn't exist.
+    //Take the layer and create a new MVTLayer or MVTPointLayer if one doesn't exist.
     var layer;
 
 //    if(type === 1){
 //      //Point Layer
-//      layer = new L.TileLayer.PBFPointLayer(self, {
+//      layer = new L.TileLayer.MVTPointLayer(self, {
 //        getIDForLayerFeature: getIDForLayerFeature,
 //        filter: self.options.filter,
 //        layerOrdering: self.options.layerOrdering,
@@ -1889,7 +1889,7 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
 //      }).addTo(self._map);
 //    }else{
       //Polygon/Line Layer
-      layer = new L.TileLayer.PBFLayer(self, {
+      layer = new L.TileLayer.MVTLayer(self, {
         getIDForLayerFeature: getIDForLayerFeature,
         filter: self.options.filter,
         layerOrdering: self.options.layerOrdering,
@@ -1935,7 +1935,7 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
   },
 
   onClick: function(evt, cb) {
-    //Here, pass the event on to the child PBFLayer and have it do the hit test and handle the result.
+    //Here, pass the event on to the child MVTLayer and have it do the hit test and handle the result.
     var self = this;
 
     evt.tileID =  getTileURL(evt.latlng.lat, evt.latlng.lng, this._map.getZoom());
@@ -2011,7 +2011,7 @@ Util.getContextID = function(ctx) {
 /**
  * Default function that gets the id for a layer feature.
  * Sometimes this needs to be done in a different way and
- * can be specified by the user in the options for L.TileLayer.PBFSource.
+ * can be specified by the user in the options for L.TileLayer.MVTSource.
  *
  * @param feature
  * @returns {ctx.id|*|id|string|jsts.index.chain.MonotoneChain.id|number}

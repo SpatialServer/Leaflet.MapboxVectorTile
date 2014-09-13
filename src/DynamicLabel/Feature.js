@@ -109,7 +109,7 @@ function positionMarker(feature, pt) {
 
 /**
  * This is the default style function. This is overridden
- * if there is a style.dynamicLabel function in PBFFeature.
+ * if there is a style.dynamicLabel function in MVTFeature.
  */
 Feature.prototype._styleFn = function() {
 
