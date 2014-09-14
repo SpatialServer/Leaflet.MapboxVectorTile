@@ -46,7 +46,7 @@ var opts = {
     return layerName + '_label';
   },
 
-  styleFor: function(feature) {
+  style: function(feature) {
     var style = {};
     var selected = style.selected = {};
 

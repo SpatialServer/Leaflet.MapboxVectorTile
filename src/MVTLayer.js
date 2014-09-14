@@ -31,7 +31,7 @@ module.exports = L.TileLayer.Canvas.extend({
     self.mvtSource = mvtSource;
     L.Util.setOptions(this, options);
 
-    this.styleFor = options.styleFor;
+    this.style = options.style;
     this.name = options.name;
     this._canvasIDToFeaturesForZoom = {};
     this.visible = true;
@@ -138,7 +138,7 @@ module.exports = L.TileLayer.Canvas.extend({
       //Create a new MVTFeature if one doesn't already exist for this feature.
       if (!mvtFeature) {
         //Get a style for the feature - set it just once for each new MVTFeature
-        var style = self.styleFor(vtf);
+        var style = self.style(vtf);
 
         //create a new feature
         self.features[uniqueID] = mvtFeature = new MVTFeature(self, vtf, ctx, uniqueID, style, this._map);
@@ -185,7 +185,7 @@ module.exports = L.TileLayer.Canvas.extend({
   },
 
   // NOTE: a placeholder for a function that, given a feature, returns a style object used to render the feature itself
-  styleFor: function(feature) {
+  style: function(feature) {
     // override with your code
   },
 

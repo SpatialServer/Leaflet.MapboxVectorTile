@@ -30,7 +30,7 @@ module.exports = L.TileLayer.Canvas.extend({
     self.mvtSource = mvtSource;
     L.Util.setOptions(this, options);
 
-    this.styleFor = options.styleFor;
+    this.style = options.style;
     this.name = options.name;
 
     this.visible = true;
@@ -151,7 +151,7 @@ module.exports = L.TileLayer.Canvas.extend({
   },
 
   // NOTE: a placeholder for a function that, given a feature, returns a style object used to render the feature itself
-  styleFor: function(feature) {
+  style: function(feature) {
     // override with your code
   },
 
@@ -201,7 +201,7 @@ module.exports = L.TileLayer.Canvas.extend({
         var id = this.zIndexSortOrder[i];
         var feature = features[id];
         if(feature){
-          this.drawPoint(ctx, feature.coordinates, this.styleFor(feature));
+          this.drawPoint(ctx, feature.coordinates, this.style(feature));
         }
       }
     }
@@ -209,7 +209,7 @@ module.exports = L.TileLayer.Canvas.extend({
       //Just loop already
       for (var i = 0; i < features.length; i++) {
         var feature = features[i];
-        this.drawPoint(ctx, feature.coordinates, this.styleFor(feature));
+        this.drawPoint(ctx, feature.coordinates, this.style(feature));
       }
     }
 

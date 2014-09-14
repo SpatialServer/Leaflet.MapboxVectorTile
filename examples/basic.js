@@ -49,7 +49,7 @@
     var fillColor = 'rgba(149,139,255,0.4)';
     var strokeColor = 'rgb(20,20,20)';
 
-    pbfSource.styleFor = pbfStyle;
+    pbfSource.style = pbfStyle;
 
     function pbfStyle(feature) {
         var style = {};

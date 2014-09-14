@@ -19,7 +19,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   layers: {}, //Keep a list of the layers contained in the PBFs
   processedTiles: {}, //Keep a list of tiles that have been processed already
   _eventHandlers: {},
-  styleFor: function() {},
+  style: function() {},
 
 
   initialize: function(options) {
@@ -34,7 +34,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     // thats that have been loaded and drawn
     this.loadedTiles = {};
 
-    this.styleFor = options.styleFor;
+    this.style = options.style;
 
     this.layerLink = options.layerLink;
 
@@ -213,7 +213,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 //        getIDForLayerFeature: getIDForLayerFeature,
 //        filter: self.options.filter,
 //        layerOrdering: self.options.layerOrdering,
-//        styleFor: self.styleFor,
+//        style: self.style,
 //        name: key,
 //        asynch: true
 //      }).addTo(self._map);
@@ -223,7 +223,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         getIDForLayerFeature: getIDForLayerFeature,
         filter: self.options.filter,
         layerOrdering: self.options.layerOrdering,
-        styleFor: self.styleFor,
+        style: self.style,
         name: key,
         asynch: true
       }).addTo(self._map);

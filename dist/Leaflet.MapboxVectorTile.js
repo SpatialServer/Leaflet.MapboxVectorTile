@@ -2399,7 +2399,7 @@ module.exports = L.TileLayer.Canvas.extend({
     self.mvtSource = mvtSource;
     L.Util.setOptions(this, options);
 
-    this.styleFor = options.styleFor;
+    this.style = options.style;
     this.name = options.name;
     this._canvasIDToFeaturesForZoom = {};
     this.visible = true;
@@ -2506,7 +2506,7 @@ module.exports = L.TileLayer.Canvas.extend({
       //Create a new MVTFeature if one doesn't already exist for this feature.
       if (!mvtFeature) {
         //Get a style for the feature - set it just once for each new MVTFeature
-        var style = self.styleFor(vtf);
+        var style = self.style(vtf);
 
         //create a new feature
         self.features[uniqueID] = mvtFeature = new MVTFeature(self, vtf, ctx, uniqueID, style, this._map);
@@ -2553,7 +2553,7 @@ module.exports = L.TileLayer.Canvas.extend({
   },
 
   // NOTE: a placeholder for a function that, given a feature, returns a style object used to render the feature itself
-  styleFor: function(feature) {
+  style: function(feature) {
     // override with your code
   },
 
@@ -2692,7 +2692,7 @@ module.exports = L.TileLayer.Canvas.extend({
     self.mvtSource = mvtSource;
     L.Util.setOptions(this, options);
 
-    this.styleFor = options.styleFor;
+    this.style = options.style;
     this.name = options.name;
 
     this.visible = true;
@@ -2813,7 +2813,7 @@ module.exports = L.TileLayer.Canvas.extend({
   },
 
   // NOTE: a placeholder for a function that, given a feature, returns a style object used to render the feature itself
-  styleFor: function(feature) {
+  style: function(feature) {
     // override with your code
   },
 
@@ -2863,7 +2863,7 @@ module.exports = L.TileLayer.Canvas.extend({
         var id = this.zIndexSortOrder[i];
         var feature = features[id];
         if(feature){
-          this.drawPoint(ctx, feature.coordinates, this.styleFor(feature));
+          this.drawPoint(ctx, feature.coordinates, this.style(feature));
         }
       }
     }
@@ -2871,7 +2871,7 @@ module.exports = L.TileLayer.Canvas.extend({
       //Just loop already
       for (var i = 0; i < features.length; i++) {
         var feature = features[i];
-        this.drawPoint(ctx, feature.coordinates, this.styleFor(feature));
+        this.drawPoint(ctx, feature.coordinates, this.style(feature));
       }
     }
 
@@ -2978,7 +2978,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   layers: {}, //Keep a list of the layers contained in the PBFs
   processedTiles: {}, //Keep a list of tiles that have been processed already
   _eventHandlers: {},
-  styleFor: function() {},
+  style: function() {},
 
 
   initialize: function(options) {
@@ -2993,7 +2993,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     // thats that have been loaded and drawn
     this.loadedTiles = {};
 
-    this.styleFor = options.styleFor;
+    this.style = options.style;
 
     this.layerLink = options.layerLink;
 
@@ -3172,7 +3172,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 //        getIDForLayerFeature: getIDForLayerFeature,
 //        filter: self.options.filter,
 //        layerOrdering: self.options.layerOrdering,
-//        styleFor: self.styleFor,
+//        style: self.style,
 //        name: key,
 //        asynch: true
 //      }).addTo(self._map);
@@ -3182,7 +3182,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         getIDForLayerFeature: getIDForLayerFeature,
         filter: self.options.filter,
         layerOrdering: self.options.layerOrdering,
-        styleFor: self.styleFor,
+        style: self.style,
         name: key,
         asynch: true
       }).addTo(self._map);
