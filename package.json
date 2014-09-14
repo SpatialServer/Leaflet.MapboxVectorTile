@@ -1,5 +1,5 @@
 {
-  "name": "Leaflet.MapboxVectorTile",
+  "name": "leaflet-mapbox-vector-tile",
   "version": "0.0.1",
   "description": "A Leaflet Plugin that renders Mapbox Vector Tiles on HTML5 Canvas.",
   "main": "index.js",
