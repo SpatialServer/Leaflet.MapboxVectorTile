@@ -7,6 +7,8 @@ var test = require('tape').test;
 var MVTSource = require('../../src/MVTSource');
 
 test('creating MVTSource object', function(t) {
+  t.plan(1);
+
   var mvtSource = new MVTSource({
     url: "http://spatialserver.spatialdev.com/services/vector-tiles/gadm2014kenya/{z}/{x}/{y}.pbf",
     debug: true,
@@ -83,10 +85,7 @@ test('creating MVTSource object', function(t) {
     }
   });
 
-
-
   t.ok(mvtSource, 'gadm2014kenya with static labels source created');
-  t.end();
 
 });
 
