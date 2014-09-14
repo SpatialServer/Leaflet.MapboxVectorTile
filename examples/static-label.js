@@ -3,15 +3,7 @@
  *       on 8/15/14.
  */
 
-var debug = {};
-
-var map = L.map('map').setView([0,39], 6); // africa
-
-L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-  maxZoom: 18
-}).addTo(map);
-
-var mvtSource = new L.TileLayer.MVTSource({
+var opts = {
   url: "http://spatialserver.spatialdev.com/services/vector-tiles/gadm2014kenya/{z}/{x}/{y}.pbf",
   debug: true,
   clickableLayers: ['gadm1'],
@@ -104,9 +96,4 @@ var mvtSource = new L.TileLayer.MVTSource({
 
     return style;
   }
-});
-
-//Add layer
-map.addLayer(mvtSource);
-
-debug.mvtSource = mvtSource;
+};
