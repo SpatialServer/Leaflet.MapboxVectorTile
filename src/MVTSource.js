@@ -1,4 +1,3 @@
-var L = require('leaflet');
 var VectorTile = require('vector-tile').VectorTile;
 var Protobuf = require('pbf');
 var Point = require('point-geometry');

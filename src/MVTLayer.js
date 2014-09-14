@@ -2,7 +2,6 @@
  * Created by Ryan Whitley on 5/17/14.
  */
 /** Forked from https://gist.github.com/DGuidi/1716010 **/
-var L = require('leaflet');
 var MVTFeature = require('./MVTFeature');
 var Util = require('./MVTUtil');
 

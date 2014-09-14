@@ -2,7 +2,6 @@
  * Created by Ryan Whitley on 9/8/14.
  */
 /** Forked from https://gist.github.com/DGuidi/1716010 **/
-var L = require('leaflet');
 var Util = require('./MVTUtil');
 
 module.exports = L.TileLayer.Canvas.extend({

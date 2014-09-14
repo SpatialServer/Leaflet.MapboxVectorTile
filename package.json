@@ -23,8 +23,7 @@
   "dependencies": {
     "vector-tile": "~0.1.2",
     "pbf": "0.0.2",
-    "point-geometry": "0.0.0",
-    "leaflet": "0.7.3"
+    "point-geometry": "0.0.0"
   },
   "devDependencies": {
     "browserify": "~5.9.1",
@@ -35,6 +34,7 @@
     "testling": "~1.7.0"
   },
   "testling": {
+    "scripts": "lib/Leaflet/leaflet-0.7.3/leaflet-src.js",
     "files": "test/js/*.js",
     "browsers": [
       "ie/9..latest",
@@ -50,7 +50,8 @@
   "scripts": {
     "start": "npm run watch & serve",
     "watch": "watchify -v -d src/MVTSource.js -o dist/Leaflet.MapboxVectorTile.js",
-    "build": "browserify -d jsrc/MVTSource.js -o dist/Leaflet.MapboxVectorTile.js",
-    "test": "browserify test/js/*.js | testling | faucet"
+    "build": "browserify -d src/MVTSource.js -o dist/Leaflet.MapboxVectorTile.js",
+    "production": "browserify -d src/MVTSource.js | uglifyjs -m -c > dist/Leaflet.MapboxVectorTile.min.js",
+    "test": "testling | faucet"
   }
 }
