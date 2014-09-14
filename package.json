@@ -31,7 +31,21 @@
     "watchify": "1.0.1",
     "serve": "^1.4.0",
     "tape": "2.14.0",
-    "faucet": "0.0.1"
+    "faucet": "0.0.1",
+    "testling": "~1.7.0"
+  },
+  "testling": {
+    "files": "test/js/*.js",
+    "browsers": [
+      "ie/9..latest",
+      "chrome/22..latest",
+      "firefox/16..latest",
+      "safari/latest",
+      "opera/11.0..latest",
+      "iphone/6",
+      "ipad/6",
+      "android-browser/latest"
+    ]
   },
   "scripts": {
     "start": "npm run watch & serve",
