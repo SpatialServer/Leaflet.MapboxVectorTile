@@ -95,7 +95,7 @@ module.exports = L.TileLayer.Canvas.extend({
         //When it finishes, do this.
         ctx = self._tiles[tilePoint.x + ":" + tilePoint.y];
         parentCtx.canvas = ctx;
-        self.redrawTile(parentCtx.id, parentCtx.zoom, parentCtx);
+        self.redrawTile(parentCtx.id, parentCtx.zoom);
 
       }, //when done, go to next flow
       2000); //The Timeout milliseconds.  After this, give up and move on
@@ -164,7 +164,7 @@ module.exports = L.TileLayer.Canvas.extend({
           self.clearTile(part.ctx);
 
           //Redraw the tile
-          self.redrawTile(id, part.ctx.zoom, part.ctx);
+          self.redrawTile(id, part.ctx.zoom);
         }
 
       });
@@ -174,7 +174,7 @@ module.exports = L.TileLayer.Canvas.extend({
     }
 
     //If a z-order function is specified, wait unitl all features have been iterated over until drawing (here)
-    self.redrawTile(ctx.id, ctx.zoom, ctx);
+    self.redrawTile(ctx.id, ctx.zoom);
 
 
     for (var j = 0, len = self.featuresWithLabels.length; j < len; j++) {
@@ -224,7 +224,7 @@ module.exports = L.TileLayer.Canvas.extend({
     ctx.canvas.width = ctx.canvas.width;
   },
 
-  redrawTile: function(canvasID, zoom, ctx) {
+  redrawTile: function(canvasID, zoom) {
     //Get the features for this tile, and redraw them.
     var features = this._canvasIDToFeaturesForZoom[canvasID]['features'];
 
@@ -233,7 +233,7 @@ module.exports = L.TileLayer.Canvas.extend({
     for (var i = 0; i < features.length; i++) {
       var feature = features[i];
       var tileInfo = feature.getTileInfo(canvasID, zoom);
-      feature.draw(tileInfo.vtf, ctx);
+      feature.draw(tileInfo.vtf, tileInfo.ctx);
     }
 
 

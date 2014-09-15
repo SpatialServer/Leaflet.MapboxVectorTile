@@ -6,7 +6,7 @@
 var opts = {
   url: "http://spatialserver.spatialdev.com/services/vector-tiles/gadm2014kenya/{z}/{x}/{y}.pbf",
   debug: true,
-  clickableLayers: ['gadm1'],
+  clickableLayers: ['gadm0', 'gadm1', 'gadm2', 'gadm3', 'gadm4', 'gadm5'],
 
   getIDForLayerFeature: function(feature) {
     return feature.properties.id;
@@ -96,4 +96,4 @@ var opts = {
 
     return style;
   }
-};
+}
