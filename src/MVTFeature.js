@@ -119,7 +119,7 @@ MVTFeature.prototype.select = function() {
   this.selected = true;
   this._eventHandlers["styleChanged"](this.tiles);
   var linkedFeature = this.linkedFeature();
-  if (linkedFeature.staticLabel && !linkedFeature.staticLabel.selected) {
+  if (linkedFeature && linkedFeature.staticLabel && !linkedFeature.staticLabel.selected) {
     linkedFeature.staticLabel.select();
   }
 };
@@ -128,7 +128,7 @@ MVTFeature.prototype.deselect = function() {
   this.selected = false;
   this._eventHandlers["styleChanged"](this.tiles);
   var linkedFeature = this.linkedFeature();
-  if (linkedFeature.staticLabel && linkedFeature.staticLabel.selected) {
+  if (linkedFeature && linkedFeature.staticLabel && linkedFeature.staticLabel.selected) {
     linkedFeature.staticLabel.deselect();
   }
 };
@@ -280,6 +280,10 @@ MVTFeature.prototype._tilePoint = function(coords) {
 
 MVTFeature.prototype.linkedFeature = function() {
   var linkedLayer = this.mvtLayer.linkedLayer();
-  var linkedFeature = linkedLayer.features[this.id];
-  return linkedFeature;
+  if(linkedLayer){
+    var linkedFeature = linkedLayer.features[this.id];
+    return linkedFeature;
+  }else{
+    return null;
+  }
 };

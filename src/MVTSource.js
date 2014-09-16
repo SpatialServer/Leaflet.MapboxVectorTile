@@ -209,7 +209,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
 //    if(type === 1){
 //      //Point Layer
-//      layer = new L.TileLayer.MVTPointLayer(self, {
+//      layer = new MVTPointLayer(self, {
 //        getIDForLayerFeature: getIDForLayerFeature,
 //        filter: self.options.filter,
 //        layerOrdering: self.options.layerOrdering,
@@ -287,6 +287,31 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         }
       }
     }
+  },
+
+  setFilter: function(filterFunction, layerName) {
+    //take in a new filter function.
+    //Propagate to child layers.
+
+    //Add filter to all child layers if no layer is specified.
+    for (var key in this.layers) {
+      var layer = this.layers[key];
+
+      if (layerName){
+        if(key.toLowerCase() == layerName.toLowerCase()){
+          layer.options.filter = filterFunction; //Assign filter to child layer, only if name matches
+          //After filter is set, the old feature hashes are invalid.  Clear them for next draw.
+          layer.clearLayerFeatureHash();
+        }
+      }
+      else{
+        layer.options.filter = filterFunction; //Assign filter to child layer
+        //After filter is set, the old feature hashes are invalid.  Clear them for next draw.
+        layer.clearLayerFeatureHash();
+      }
+    }
+
+
   }
 });
 

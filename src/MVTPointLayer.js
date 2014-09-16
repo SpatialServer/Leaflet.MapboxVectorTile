@@ -36,6 +36,7 @@ module.exports = L.TileLayer.Canvas.extend({
     this.visible = true;
     this.features = {};
     this.featuresWithLabels = [];
+    this.featuresToDraw = []; //A list of features to actually draw that pass filters.
     this.zIndexSortOrder = [];
   },
 
@@ -102,6 +103,8 @@ module.exports = L.TileLayer.Canvas.extend({
     //Clear tile -- TODO: Add flag so this only happens when a layer is being turned back on after being hidden
     if(ctx.canvas) ctx.canvas.width = ctx.canvas.width;
 
+    self.featuresToDraw = []; //clear features for this parsing.
+
     var features = this.features = vtl.parsedFeatures;
     for (var i = 0, len = features.length; i < len; i++) {
       var vtf = features[i] //vector tile feature
@@ -119,8 +122,13 @@ module.exports = L.TileLayer.Canvas.extend({
        */
       var filter = self.options.filter;
       if (typeof filter === 'function') {
-        if ( filter(vtf, ctx) === false ) continue;
+        if ( filter(vtf, ctx) === true ){
+          self.featuresToDraw.push(vtf); //add feature if filter returns true;
+        }
       }
+
+      //if no filter, add the feature to the output list to draw.
+      if(!filter) self.featuresToDraw.push(vtf);
 
       var layerOrdering = self.options.layerOrdering;
       if (typeof layerOrdering === 'function') {
@@ -136,9 +144,12 @@ module.exports = L.TileLayer.Canvas.extend({
     var layerOrdering = self.options.layerOrdering;
     if (layerOrdering) {
       //We've assigned the custom zIndex property when iterating above.  Now just sort.
-      self.zIndexSortOrder = Object.keys(this.features).sort(function(a, b) {
-        return -(self.features[b].properties.zIndex - self.features[a].properties.zIndex)
+      self.zIndexSortOrder = self.featuresToDraw.sort(function(a, b) {
+        return -(b.properties.zIndex - a.properties.zIndex)
       });
+    }else{
+      //Just set the zIndexSortOrder property to the list of features.
+      self.zIndexSortOrder = self.featuresToDraw;
     }
 
     self.redrawTile(ctx.id, ctx.zoom, ctx);
@@ -190,28 +201,24 @@ module.exports = L.TileLayer.Canvas.extend({
     ctx.canvas.width = ctx.canvas.width;
   },
 
+  clearLayerFeatureHash: function(){
+
+  },
+
   redrawTile: function(canvasID, zoom, ctx) {
     //Get the features for this tile, and redraw them.
-    var features = this.features;
 
-    //if z-index function is specified, sort the features so they draw in the correct order, bottom points draw first.
-    if(this.zIndexSortOrder && this.zIndexSortOrder.length > 0){
-      //Loop in specific order
-      for (var i = 0; i < this.zIndexSortOrder.length; i++) {
-        var id = this.zIndexSortOrder[i];
-        var feature = features[id];
-        if(feature){
-          this.drawPoint(ctx, feature.coordinates, this.style(feature));
+    for (var i = 0; i < this.zIndexSortOrder.length; i++) {
+      var feature = this.zIndexSortOrder[i];
+      var style = this.style(feature);
+      if (feature) {
+        this.drawPoint(ctx, feature.coordinates, style);
+        if (typeof style.staticLabel === 'function') {
+          this._drawStaticLabel(ctx, feature.coordinates, style);
         }
       }
     }
-    else{
-      //Just loop already
-      for (var i = 0; i < features.length; i++) {
-        var feature = features[i];
-        this.drawPoint(ctx, feature.coordinates, this.style(feature));
-      }
-    }
+
 
     //Remove features
     this.features = {};

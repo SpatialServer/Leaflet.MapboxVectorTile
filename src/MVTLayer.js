@@ -51,17 +51,19 @@ module.exports = L.TileLayer.Canvas.extend({
     ctx.id = Util.getContextID(ctx);
 
     if (!this._canvasIDToFeaturesForZoom[ctx.id]) {
-      this._canvasIDToFeaturesForZoom[ctx.id] = {};
-      this._canvasIDToFeaturesForZoom[ctx.id]['features'] = [];
-      this._canvasIDToFeaturesForZoom[ctx.id]['canvas'] = canvas;
+      this._initializeFeaturesHash(ctx);
     }
     if (!this.features) {
       this.features = {};
     }
 
-
-
     //this._resetCanvasIDToFeaturesForZoomState(ctx.id, canvas, zoom);
+  },
+
+  _initializeFeaturesHash: function(ctx){
+    this._canvasIDToFeaturesForZoom[ctx.id] = {};
+    this._canvasIDToFeaturesForZoom[ctx.id]['features'] = [];
+    this._canvasIDToFeaturesForZoom[ctx.id]['canvas'] = ctx.canvas;
   },
 
   _draw: function(ctx) {
@@ -108,6 +110,11 @@ module.exports = L.TileLayer.Canvas.extend({
 
     //See if we can pluck the child tile from this PBF tile layer based on the master layer's tile id.
     ctx.canvas = self._tiles[tilePoint.x + ":" + tilePoint.y];
+
+    //Initialize this tile's feature storage hash, if it hasn't already been created.  Used for when filters are updated, and features are cleared to prepare for a fresh redraw.
+    if (!this._canvasIDToFeaturesForZoom[ctx.id]) {
+      this._initializeFeaturesHash(ctx);
+    }
 
     //Clear tile -- TODO: Add flag so this only happens when a layer is being turned back on after being hidden
     if(ctx.canvas) ctx.canvas.width = ctx.canvas.width;
@@ -161,10 +168,10 @@ module.exports = L.TileLayer.Canvas.extend({
         for (var id in parts[zoom]) {
           var part = parts[zoom][id];
           //Clear the tile
-          self.clearTile(part.ctx);
+          self.clearTile(id);
 
           //Redraw the tile
-          self.redrawTile(id, part.ctx.zoom);
+          self.redrawTile(id, part.ctx.zoom, part.ctx);
         }
 
       });
@@ -220,8 +227,16 @@ module.exports = L.TileLayer.Canvas.extend({
     cb(evt);
   },
 
-  clearTile: function(ctx) {
-    ctx.canvas.width = ctx.canvas.width;
+  clearTile: function(id) {
+    //id is the entire zoom:x:y.  we just want x:y.
+    var ca = id.split(":");
+    var canvasId = ca[1] + ":" + ca[2];
+    this._tiles[canvasId].width = this._tiles[canvasId].width;
+  },
+
+  clearLayerFeatureHash: function(){
+    this._canvasIDToFeaturesForZoom = {}; //Get rid of all saved features
+    this.features = {};
   },
 
   redrawTile: function(canvasID, zoom) {
@@ -235,8 +250,6 @@ module.exports = L.TileLayer.Canvas.extend({
       var tileInfo = feature.getTileInfo(canvasID, zoom);
       feature.draw(tileInfo.vtf, tileInfo.ctx);
     }
-
-
   },
 
   _resetCanvasIDToFeaturesForZoomState: function(canvasID, canvas, zoom) {
@@ -248,8 +261,13 @@ module.exports = L.TileLayer.Canvas.extend({
   },
 
   linkedLayer: function() {
-    var linkName = this.mvtSource.layerLink(this.name);
-    return this.mvtSource.layers[linkName];
+    if(this.mvtSource.layerLink) {
+      var linkName = this.mvtSource.layerLink(this.name);
+      return this.mvtSource.layers[linkName];
+    }
+    else{
+      return null;
+    }
   }
 
 });

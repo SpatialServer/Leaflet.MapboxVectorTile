@@ -14,7 +14,7 @@
     var pbfSource = new L.TileLayer.MVTSource({
         url: "http://spatialserver.spatialdev.com/services/vector-tiles/GAUL_FSP/{z}/{x}/{y}.pbf",
         debug: true,
-        clickableLayers: ["gadm2"],
+        clickableLayers: ["GAUL0"],
         getIDForLayerFeature: function(feature) {
             switch (feature.layer.name) {
                 case "gadm0":
