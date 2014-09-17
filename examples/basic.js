@@ -99,20 +99,13 @@ function pbfSelectedStyle(vectorTileFeature) {
 
 map.on("click", function(e) {
   //Take the click event and pass it to the group layers.
-
   mvtSource.onClick(e, function(evt) {
     if (evt && evt.feature) {
-      //alert("Clicked Country: " + evt.feature.name_0);
-      $("#idResults").html("Clicked Country: " + evt.feature.properties.name_0);
-
-      evt.feature.isSelected = !evt.feature.isSelected;
-
       var style;
-      if (evt.feature.isSelected === true) {
+      if (evt.feature.selected) {
         //Set selected style
         style = pbfSelectedStyle(evt.feature);
-      }
-      else {
+      } else {
         //return to normal color
         style = pbfStyle(evt.feature);
       }
@@ -120,7 +113,6 @@ map.on("click", function(e) {
       //set it - this triggers an auto tile redraw
       evt.feature.setStyle(style);
     }
-
   });
 });
 
