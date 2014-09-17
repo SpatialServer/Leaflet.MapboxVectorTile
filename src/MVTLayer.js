@@ -60,12 +60,6 @@ module.exports = L.TileLayer.Canvas.extend({
     //this._resetCanvasIDToFeaturesForZoomState(ctx.id, canvas, zoom);
   },
 
-  _initializeFeaturesHash: function(ctx){
-    this._canvasIDToFeaturesForZoom[ctx.id] = {};
-    this._canvasIDToFeaturesForZoom[ctx.id]['features'] = [];
-    this._canvasIDToFeaturesForZoom[ctx.id]['canvas'] = ctx.canvas;
-  },
-
   _draw: function(ctx) {
     //Draw is handled by the parent MVTSource object
   },
@@ -79,7 +73,7 @@ module.exports = L.TileLayer.Canvas.extend({
 
     if(ctx){
       parentCtx.canvas = ctx;
-      this.redrawTile(parentCtx.id, parentCtx.zoom);
+      this.redrawTile(parentCtx);
       return;
     }
 
@@ -97,7 +91,7 @@ module.exports = L.TileLayer.Canvas.extend({
         //When it finishes, do this.
         ctx = self._tiles[tilePoint.x + ":" + tilePoint.y];
         parentCtx.canvas = ctx;
-        self.redrawTile(parentCtx.id, parentCtx.zoom);
+        self.redrawTile(parentCtx);
 
       }, //when done, go to next flow
       2000); //The Timeout milliseconds.  After this, give up and move on
@@ -142,6 +136,15 @@ module.exports = L.TileLayer.Canvas.extend({
       var uniqueID = self.options.getIDForLayerFeature(vtf) || i;
       var mvtFeature = self.features[uniqueID];
 
+      /**
+       * Use layerOrdering function to apply a zIndex property to each vtf.  This is defined in
+       * TileLayer.MVTSource.js.  Used below to sort features.npm
+       */
+      var layerOrdering = self.options.layerOrdering;
+      if (typeof layerOrdering === 'function') {
+        layerOrdering(vtf, ctx); //Applies a custom property to the feature, which is used after we're thru iterating to sort
+      }
+
       //Create a new MVTFeature if one doesn't already exist for this feature.
       if (!mvtFeature) {
         //Get a style for the feature - set it just once for each new MVTFeature
@@ -171,7 +174,7 @@ module.exports = L.TileLayer.Canvas.extend({
           self.clearTile(id);
 
           //Redraw the tile
-          self.redrawTile(id, part.ctx.zoom, part.ctx);
+          self.redrawTile(part.ctx);
         }
 
       });
@@ -180,8 +183,19 @@ module.exports = L.TileLayer.Canvas.extend({
       //mvtFeature.draw(vtf, ctx);
     }
 
-    //If a z-order function is specified, wait unitl all features have been iterated over until drawing (here)
-    self.redrawTile(ctx.id, ctx.zoom);
+    /**
+     * Apply sorting (zIndex) on feature if there is a function defined in the options object
+     * of TileLayer.MVTSource.js
+     */
+    var layerOrdering = self.options.layerOrdering;
+    if (layerOrdering) {
+      //We've assigned the custom zIndex property when iterating above.  Now just sort.
+      self._canvasIDToFeaturesForZoom[ctx.id]['features'] = self._canvasIDToFeaturesForZoom[ctx.id]['features'].sort(function(a, b) {
+        return -(b.properties.zIndex - a.properties.zIndex)
+      });
+    }
+
+    self.redrawTile(ctx);
 
 
     for (var j = 0, len = self.featuresWithLabels.length; j < len; j++) {
@@ -239,12 +253,26 @@ module.exports = L.TileLayer.Canvas.extend({
     this.features = {};
   },
 
-  redrawTile: function(canvasID, zoom) {
+  _initializeFeaturesHash: function(ctx){
+    this._canvasIDToFeaturesForZoom[ctx.id] = {};
+    this._canvasIDToFeaturesForZoom[ctx.id]['features'] = [];
+    this._canvasIDToFeaturesForZoom[ctx.id]['canvas'] = ctx.canvas;
+  },
+
+  redrawTile: function(ctx) {
+    //Initialize this tile's feature storage hash, if it hasn't already been created.  Used for when filters are updated, and features are cleared to prepare for a fresh redraw.
+    if (!this._canvasIDToFeaturesForZoom[ctx.id]) {
+      this._initializeFeaturesHash(ctx);
+      return;
+    }
+
+    var canvasID = ctx.id;
+    var zoom = ctx.zoom;
+
     //Get the features for this tile, and redraw them.
     var features = this._canvasIDToFeaturesForZoom[canvasID]['features'];
 
     //if z-index function is specified, sort the features so they draw in the correct order, bottom points draw first.
-
     for (var i = 0; i < features.length; i++) {
       var feature = features[i];
       var tileInfo = feature.getTileInfo(canvasID, zoom);

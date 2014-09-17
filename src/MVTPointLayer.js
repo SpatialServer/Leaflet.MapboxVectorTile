@@ -51,9 +51,9 @@ module.exports = L.TileLayer.Canvas.extend({
 
     ctx.id = Util.getContextID(ctx);
 
-    if (!this.features) {
-      this.features = {};
-    }
+//    if (!this.features) {
+//      this.features = {};
+//    }
 
   },
 
@@ -105,9 +105,17 @@ module.exports = L.TileLayer.Canvas.extend({
 
     self.featuresToDraw = []; //clear features for this parsing.
 
-    var features = this.features = vtl.parsedFeatures;
+    var features = vtl.parsedFeatures;
     for (var i = 0, len = features.length; i < len; i++) {
       var vtf = features[i] //vector tile feature
+
+      var getIDForLayerFeature;
+      if (typeof self.options.getIDForLayerFeature === 'function') {
+        getIDForLayerFeature = self.options.getIDForLayerFeature;
+      } else {
+        getIDForLayerFeature = Util.getIDForLayerFeature;
+      }
+      var uniqueID = self.options.getIDForLayerFeature(vtf) || i;
 
       if(i === 0){
         // how much we divide the coordinate from the vector tile
@@ -124,6 +132,7 @@ module.exports = L.TileLayer.Canvas.extend({
       if (typeof filter === 'function') {
         if ( filter(vtf, ctx) === true ){
           self.featuresToDraw.push(vtf); //add feature if filter returns true;
+          self.features[uniqueID] = vtf; //TODO: Clear when a new z-index is in effect. Also, we probably don't want to do this.
         }
       }
 
@@ -152,7 +161,7 @@ module.exports = L.TileLayer.Canvas.extend({
       self.zIndexSortOrder = self.featuresToDraw;
     }
 
-    self.redrawTile(ctx.id, ctx.zoom, ctx);
+    self.redrawTile(ctx);
 
     for (var j = 0, len = self.featuresWithLabels.length; j < len; j++) {
       var feat = self.featuresWithLabels[j];
@@ -205,7 +214,7 @@ module.exports = L.TileLayer.Canvas.extend({
 
   },
 
-  redrawTile: function(canvasID, zoom, ctx) {
+  redrawTile: function(ctx) {
     //Get the features for this tile, and redraw them.
 
     for (var i = 0; i < this.zIndexSortOrder.length; i++) {
@@ -221,7 +230,9 @@ module.exports = L.TileLayer.Canvas.extend({
 
 
     //Remove features
-    this.features = {};
+    //this.features = {};
+    this.zIndexSortOrder = [];
+    this.featureToDraw = [];
   },
 
   linkedLayer: function() {
