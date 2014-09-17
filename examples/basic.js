@@ -52,67 +52,41 @@ function pbfStyle(feature) {
     case 1: //'Point'
       style.color = 'rgba(49,79,79,1)';
       style.radius = 5;
+      style.selected = {
+        color: 'rgba(255,255,0,0.5)',
+        radius: 6
+      };
       break;
     case 2: //'LineString'
       style.color = 'rgba(161,217,155,0.8)';
       style.size = 3;
+      style.selected = {
+        color: 'rgba(255,25,0,0.5)',
+        size: 4
+      };
       break;
     case 3: //'Polygon'
       style.color = fillColor;
       style.outline = {
         color: strokeColor,
-        size: 2
+        size: 1
+      };
+      style.selected = {
+        color: 'rgba(255,140,0,0.3)',
+        outline: {
+          color: 'rgba(255,140,0,1)',
+          size: 2
+        }
       };
       break;
   }
   return style;
 }
 
-function pbfSelectedStyle(vectorTileFeature) {
-  var type = vectorTileFeature.type;
-  switch (type) {
-    case 1: //'Point'
-      return {
-        color: 'rgba(255,255,0,0.5)',
-        radius: 5
-      };
-
-    case 2: //'LineString'
-      return {
-        color: 'rgba(255,25,0,0.5)',
-        size: 3
-      };
-
-    case 3: //'Polygon'
-      return {
-        color: 'rgba(255,140,0,0.3)',
-        outline: {
-          color: 'rgba(255,140,0,1)',
-          size: 1
-        }
-      };
-
-    default:
-      return null;
-  }
-}
-
 map.on("click", function(e) {
   //Take the click event and pass it to the group layers.
   mvtSource.onClick(e, function(evt) {
-    if (evt && evt.feature) {
-      var style;
-      if (evt.feature.selected) {
-        //Set selected style
-        style = pbfSelectedStyle(evt.feature);
-      } else {
-        //return to normal color
-        style = pbfStyle(evt.feature);
-      }
 
-      //set it - this triggers an auto tile redraw
-      evt.feature.setStyle(style);
-    }
   });
 });
 
