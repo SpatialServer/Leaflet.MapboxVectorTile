@@ -160,21 +160,6 @@ module.exports = L.TileLayer.Canvas.extend({
       //Associate & Save this feature with this tile for later
       if(ctx && ctx.id) self._canvasIDToFeaturesForZoom[ctx.id]['features'].push(mvtFeature);
 
-      //Subscribe to style changes for feature
-      mvtFeature.on("styleChanged", function(parts) {
-        console.log('styleChanged');
-        //Redraw the whole tile, not just this vtf
-        var zoom = self._map._zoom;
-
-        for (var id in parts[zoom]) {
-          var part = parts[zoom][id];
-          //Clear the tile
-          self.clearTile(id);
-
-          //Redraw the tile
-          self.redrawTile(id, part.ctx.zoom);
-        }
-      });
     }
 
     //If a z-order function is specified, wait unitl all features have been iterated over until drawing (here)
@@ -230,10 +215,10 @@ module.exports = L.TileLayer.Canvas.extend({
     var canvasId = ca[1] + ":" + ca[2];
     var canvas = this._tiles[canvasId];
 
-//    old school way of clearing a canvas
+//  old school way of clearing a canvas
 //    canvas.width = canvas.width;
 
-//    explicit way of clearing a canvas (better perf)
+//  explicit way of clearing a canvas (better perf)
     var context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -256,7 +241,7 @@ module.exports = L.TileLayer.Canvas.extend({
     console.log('redrawTile ' + canvasID + ' ' + zoom);
 
     //Get the features for this tile, and redraw them.
-    var features = this._canvasIDToFeaturesForZoom[canvasID]['features'];
+    var features = this._canvasIDToFeaturesForZoom[canvasID].features;
 
     //if z-index function is specified, sort the features so they draw in the correct order, bottom points draw first.
 
@@ -269,8 +254,8 @@ module.exports = L.TileLayer.Canvas.extend({
   _resetCanvasIDToFeaturesForZoomState: function(canvasID, canvas, zoom) {
 
     this._canvasIDToFeaturesForZoom[canvasID] = {};
-    this._canvasIDToFeaturesForZoom[canvasID]['features'] = [];
-    this._canvasIDToFeaturesForZoom[canvasID]['canvas'] = canvas;
+    this._canvasIDToFeaturesForZoom[canvasID].features = [];
+    this._canvasIDToFeaturesForZoom[canvasID].canvas = canvas;
 
   },
 

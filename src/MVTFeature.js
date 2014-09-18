@@ -108,10 +108,33 @@ MVTFeature.prototype.getTileInfo = function(canvasID, zoom) {
   return this.tiles[zoom][canvasID];
 };
 
+/**
+ * Redraws all of the tiles associated with a feature. Useful for
+ * style change and toggling.
+ *
+ * @param self
+ */
+function redrawTiles(self) {
+  //Redraw the whole tile, not just this vtf
+  var zoom = self.map.getZoom();
+  var tiles = self.tiles[zoom];
+  var mvtLayer = self.mvtLayer;
+
+  for (var id in tiles) {
+    var tile = tiles[id];
+
+    //Clear the tile
+    mvtLayer.clearTile(id);
+
+    //Redraw the tile
+    mvtLayer.redrawTile(id, zoom);
+  }
+}
+
 MVTFeature.prototype.setStyle = function(style) {
   //Set this feature's style and redraw all canvases that this thing is a part of
   this.style = style;
-  this._eventHandlers["styleChanged"](this.tiles);
+  redrawTiles(this);
 };
 
 MVTFeature.prototype.toggle = function() {
@@ -124,7 +147,7 @@ MVTFeature.prototype.toggle = function() {
 
 MVTFeature.prototype.select = function() {
   this.selected = true;
-  this._eventHandlers["styleChanged"](this.tiles);
+  redrawTiles(this);
   var linkedFeature = this.linkedFeature();
   if (linkedFeature && linkedFeature.staticLabel && !linkedFeature.staticLabel.selected) {
     linkedFeature.staticLabel.select();
@@ -133,7 +156,7 @@ MVTFeature.prototype.select = function() {
 
 MVTFeature.prototype.deselect = function() {
   this.selected = false;
-  this._eventHandlers["styleChanged"](this.tiles);
+  redrawTiles(this);
   var linkedFeature = this.linkedFeature();
   if (linkedFeature && linkedFeature.staticLabel && linkedFeature.staticLabel.selected) {
     linkedFeature.staticLabel.deselect();
