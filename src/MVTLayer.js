@@ -228,15 +228,23 @@ module.exports = L.TileLayer.Canvas.extend({
     //id is the entire zoom:x:y.  we just want x:y.
     var ca = id.split(":");
     var canvasId = ca[1] + ":" + ca[2];
-    var tile = this._tiles[canvasId];
+    var canvas = this._tiles[canvasId];
+
+//    old school way of clearing a canvas
+//    canvas.width = canvas.width;
+
+//    explicit way of clearing a canvas (better perf)
+    var context = canvas.getContext('2d');
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
     console.log(['clearTile ' + id, {
       id: id,
       canvasId: canvasId,
-      tile: tile,
+      canvas: canvas,
       layerName: this.name,
       leafletId: this._leaflet_id
     }]);
-    tile.width = tile.width;
+
   },
 
   clearLayerFeatureHash: function(){
