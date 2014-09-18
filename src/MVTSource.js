@@ -19,7 +19,45 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   layers: {}, //Keep a list of the layers contained in the PBFs
   processedTiles: {}, //Keep a list of tiles that have been processed already
   _eventHandlers: {},
-  style: function() {},
+
+  style: function(feature) {
+    var style = {};
+
+    var type = feature.type;
+    switch (type) {
+      case 1: //'Point'
+        style.color = 'rgba(49,79,79,1)';
+        style.radius = 5;
+        style.selected = {
+          color: 'rgba(255,255,0,0.5)',
+          radius: 6
+        };
+        break;
+      case 2: //'LineString'
+        style.color = 'rgba(161,217,155,0.8)';
+        style.size = 3;
+        style.selected = {
+          color: 'rgba(255,25,0,0.5)',
+          size: 4
+        };
+        break;
+      case 3: //'Polygon'
+        style.color = fillColor;
+        style.outline = {
+          color: strokeColor,
+          size: 1
+        };
+        style.selected = {
+          color: 'rgba(255,140,0,0.3)',
+          outline: {
+            color: 'rgba(255,140,0,1)',
+            size: 2
+          }
+        };
+        break;
+    }
+    return style;
+  },
 
 
   initialize: function(options) {
@@ -34,7 +72,9 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     // thats that have been loaded and drawn
     this.loadedTiles = {};
 
-    this.style = options.style;
+    if (typeof options.style === 'function') {
+      this.style = options.style;
+    }
 
     this.layerLink = options.layerLink;
 
@@ -50,6 +90,14 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
     map.on('click', function(e) {
       self.onClick(e);
+    });
+
+    map.on("layerremove", function(removed) {
+      //This is the layer that was removed.
+      //If it is a TileLayer.MVTSource, then call a method to actually remove the children, too.
+      if (removed.layer.removeChildLayers) {
+        removed.layer.removeChildLayers(map);
+      }
     });
 
     if (typeof DynamicLabel === 'function' ) {
