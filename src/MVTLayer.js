@@ -237,8 +237,8 @@ module.exports = L.TileLayer.Canvas.extend({
     this.features = {};
   },
 
-  redrawTile: function(canvasID, zoom) {
-    console.log('redrawTile ' + canvasID + ' ' + zoom);
+  redrawTile: function(canvasID) {
+    console.log('redrawTile ' + canvasID);
 
     //Get the features for this tile, and redraw them.
     var features = this._canvasIDToFeaturesForZoom[canvasID].features;
@@ -247,7 +247,7 @@ module.exports = L.TileLayer.Canvas.extend({
 
     for (var i = 0; i < features.length; i++) {
       var feature = features[i];
-      feature.draw(canvasID, zoom);
+      feature.draw(canvasID);
     }
   },
 

@@ -47,8 +47,10 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
   }
 }
 
-MVTFeature.prototype.draw = function(canvasID, zoom) {
-  var tileInfo = this.getTileInfo(canvasID, zoom);
+MVTFeature.prototype.draw = function(canvasID) {
+  //Get the info from the tiles list
+  var tileInfo =  this.tiles[this.map.getZoom()][canvasID];
+
   var vtf = tileInfo.vtf;
   var ctx = tileInfo.ctx;
 
@@ -99,15 +101,6 @@ MVTFeature.prototype.addTileFeature = function(vtf, ctx) {
   };
 };
 
-
-MVTFeature.prototype.getTileInfo = function(canvasID, zoom) {
-  if (typeof zoom === 'undefined') {
-    zoom = canvasID.split(':')[0];
-  }
-  //Get the info from the parts list
-  return this.tiles[zoom][canvasID];
-};
-
 /**
  * Redraws all of the tiles associated with a feature. Useful for
  * style change and toggling.
@@ -121,13 +114,11 @@ function redrawTiles(self) {
   var mvtLayer = self.mvtLayer;
 
   for (var id in tiles) {
-    var tile = tiles[id];
-
     //Clear the tile
     mvtLayer.clearTile(id);
 
     //Redraw the tile
-    mvtLayer.redrawTile(id, zoom);
+    mvtLayer.redrawTile(id);
   }
 }
 
