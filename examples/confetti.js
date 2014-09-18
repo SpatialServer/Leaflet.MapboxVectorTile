@@ -91,16 +91,20 @@
             style.color = CICO_LAYERS[feature.properties.type].color || '#3086AB';
             style.radius = ScaleDependentPointRadius;
             // selected
-            selected.color = 'rgba(255,255,0,0.5)';
-            selected.radius = 5;
+            style.selected = {
+              color: 'rgba(255,255,0,0.5)',
+              radius: 6
+            };
             break;
           case 2: //'LineString'
             // unselected
             style.color = 'rgba(161,217,155,0.8)';
             style.size = 3;
             // selected
-            selected.color = 'rgba(255,25,0,0.5)';
-            selected.size = 3;
+            style.selected = {
+              color: 'rgba(255,255,0,0.5)',
+              size: 6
+            };
             break;
           case 3: //'Polygon'
             // unselected
@@ -110,11 +114,14 @@
               size: 2
             };
             // selected
-            selected.color = 'rgba(255,25,0,0.3)';
-            selected.outline = {
-              color: '#d9534f',
-              size: 3
+            style.selected = {
+              color: 'rgba(255,255,0,0.5)',
+              outline: {
+                color: '#d9534f',
+                size: 3
+              }
             };
+
         }
 
         return style;
