@@ -1,10 +1,8 @@
 var VectorTile = require('vector-tile').VectorTile;
 var Protobuf = require('pbf');
 var Point = require('point-geometry');
-
 var Util = require('./MVTUtil');
 var MVTLayer = require('./MVTLayer');
-var MVTPointLayer = require('./MVTPointLayer');
 
 
 module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
@@ -86,6 +84,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
   onAdd: function(map) {
     var self = this;
+    self.map = map;
     L.TileLayer.Canvas.prototype.onAdd.call(this, map);
 
     map.on('click', function(e) {
@@ -218,7 +217,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
       var lyr = vt.layers[key];
       if (!self.layers[key]) {
         //Create MVTLayer or MVTPointLayer for user
-        self.layers[key] = self.createPBFLayer(key, lyr.parsedFeatures[0].type || null);
+        self.layers[key] = self.createMVTLayer(key, lyr.parsedFeatures[0].type || null);
       }
 
       //If layer is marked as visible, examine the contents.
@@ -241,7 +240,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     this.bringToFront();
   },
 
-  createPBFLayer: function(key, type) {
+  createMVTLayer: function(key, type) {
     var self = this;
 
     var getIDForLayerFeature;
@@ -252,29 +251,14 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     }
 
     //Take the layer and create a new MVTLayer or MVTPointLayer if one doesn't exist.
-    var layer;
-
-//    if(type === 1){
-//      //Point Layer
-//      layer = new MVTPointLayer(self, {
-//        getIDForLayerFeature: getIDForLayerFeature,
-//        filter: self.options.filter,
-//        layerOrdering: self.options.layerOrdering,
-//        style: self.style,
-//        name: key,
-//        asynch: true
-//      }).addTo(self._map);
-//    }else{
-      //Polygon/Line Layer
-      layer = new MVTLayer(self, {
+    var layer = new MVTLayer(self, {
         getIDForLayerFeature: getIDForLayerFeature,
         filter: self.options.filter,
         layerOrdering: self.options.layerOrdering,
         style: self.style,
         name: key,
         asynch: true
-      }).addTo(self._map);
-    //}
+      }).addTo(self.map);
 
     return layer;
   },

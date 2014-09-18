@@ -89,6 +89,9 @@ MVTFeature.prototype.getPathsForTile = function(canvasID, zoom) {
 
 MVTFeature.prototype.addTileFeature = function(vtf, ctx) {
 
+  if (ctx.canvas._layer.name !== 'GAUL0') {
+    console.log('not GAUL0');
+  }
   //Store the parts of the feature for a particular zoom level
   var zoom = ctx.zoom;
   if (!this.tiles[ctx.zoom]) this.tiles[ctx.zoom] = {};
