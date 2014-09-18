@@ -160,8 +160,11 @@ MVTFeature.prototype._drawPoint = function(ctx, coordsArray, style) {
   g.closePath();
   g.fill();
 
-  if(style.lineWidth) g.lineWidth = style.lineWidth;
-  if(style.strokeStyle) g.strokeStyle = style.strokeStyle;
+  if(style.lineWidth && style.strokeStyle){
+    g.lineWidth = style.lineWidth;
+    g.strokeStyle = style.strokeStyle;
+    g.stroke();
+  }
 
   g.restore();
   part.paths.push([p]);
