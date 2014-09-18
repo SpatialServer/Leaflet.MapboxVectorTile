@@ -47,7 +47,11 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
   }
 }
 
-MVTFeature.prototype.draw = function(vtf, ctx) {
+MVTFeature.prototype.draw = function(canvasID, zoom) {
+  var tileInfo = this.getTileInfo(canvasID, zoom);
+  var vtf = tileInfo.vtf;
+  var ctx = tileInfo.ctx;
+
   if (this.selected) {
     var style = this.style.selected || this.style;
   } else {
@@ -97,6 +101,9 @@ MVTFeature.prototype.addTileFeature = function(vtf, ctx) {
 
 
 MVTFeature.prototype.getTileInfo = function(canvasID, zoom) {
+  if (typeof zoom === 'undefined') {
+    zoom = canvasID.split(':')[0];
+  }
   //Get the info from the parts list
   return this.tiles[zoom][canvasID];
 };

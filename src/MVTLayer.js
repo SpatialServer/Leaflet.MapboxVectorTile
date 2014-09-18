@@ -162,6 +162,7 @@ module.exports = L.TileLayer.Canvas.extend({
 
       //Subscribe to style changes for feature
       mvtFeature.on("styleChanged", function(parts) {
+        console.log('styleChanged');
         //Redraw the whole tile, not just this vtf
         var zoom = self._map._zoom;
 
@@ -171,13 +172,9 @@ module.exports = L.TileLayer.Canvas.extend({
           self.clearTile(id);
 
           //Redraw the tile
-          self.redrawTile(id, part.ctx.zoom, part.ctx);
+          self.redrawTile(id, part.ctx.zoom);
         }
-
       });
-
-      //Tell it to draw
-      //mvtFeature.draw(vtf, ctx);
     }
 
     //If a z-order function is specified, wait unitl all features have been iterated over until drawing (here)
@@ -232,7 +229,7 @@ module.exports = L.TileLayer.Canvas.extend({
     var ca = id.split(":");
     var canvasId = ca[1] + ":" + ca[2];
     var tile = this._tiles[canvasId];
-    console.log(['clearTile', {
+    console.log(['clearTile ' + id, {
       id: id,
       canvasId: canvasId,
       tile: tile,
@@ -248,6 +245,8 @@ module.exports = L.TileLayer.Canvas.extend({
   },
 
   redrawTile: function(canvasID, zoom) {
+    console.log('redrawTile ' + canvasID + ' ' + zoom);
+
     //Get the features for this tile, and redraw them.
     var features = this._canvasIDToFeaturesForZoom[canvasID]['features'];
 
@@ -255,8 +254,7 @@ module.exports = L.TileLayer.Canvas.extend({
 
     for (var i = 0; i < features.length; i++) {
       var feature = features[i];
-      var tileInfo = feature.getTileInfo(canvasID, zoom);
-      feature.draw(tileInfo.vtf, tileInfo.ctx);
+      feature.draw(canvasID, zoom);
     }
   },
 

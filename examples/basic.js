@@ -13,7 +13,7 @@ L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
 
 var mvtSource = new L.TileLayer.MVTSource({
   url: "http://spatialserver.spatialdev.com/services/vector-tiles/GAUL_FSP/{z}/{x}/{y}.pbf",
-  debug: true,
+  debug: false,
   clickableLayers: ["GAUL0"],
   getIDForLayerFeature: function(feature) {
     return feature.properties.id;
