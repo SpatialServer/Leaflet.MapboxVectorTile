@@ -83,13 +83,6 @@ function pbfStyle(feature) {
   return style;
 }
 
-map.on("click", function(e) {
-  //Take the click event and pass it to the group layers.
-  mvtSource.onClick(e, function(evt) {
-
-  });
-});
-
 map.on("layerremove", function(removed) {
   //This is the layer that was removed.
   //If it is a TileLayer.MVTSource, then call a method to actually remove the children, too.

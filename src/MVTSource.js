@@ -48,10 +48,9 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     var self = this;
     L.TileLayer.Canvas.prototype.onAdd.call(this, map);
 
-//    determineActiveTiles(self, map);
-//    map.on('moveend', function(evt) {
-//      determineActiveTiles(self, map);
-//    });
+    map.on('click', function(e) {
+      self.onClick(e);
+    });
 
     if (typeof DynamicLabel === 'function' ) {
       this.dynamicLabel = new DynamicLabel(map, this, {});
@@ -274,7 +273,9 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     if(this.options.clickableLayers.length == 0) {
       var names = Object.keys(self.layers);
       self.layers[names[0]].handleClickEvent(evt, function (evt) {
-        cb(evt);
+        if (typeof cb === 'function') {
+          cb(evt);
+        }
       });
     }
     else{
@@ -282,7 +283,9 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         var layer = this.layers[key];
         if(self.options.clickableLayers.indexOf(key) > -1){
           layer.handleClickEvent(evt, function(evt) {
-            cb(evt);
+            if (typeof cb === 'function') {
+              cb(evt);
+            }
           });
         }
       }
