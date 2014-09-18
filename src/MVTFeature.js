@@ -142,6 +142,7 @@ MVTFeature.prototype._drawPoint = function(ctx, coordsArray, style) {
 
   var part = this.tiles[ctx.zoom][ctx.id];
 
+  //Get radius
   var radius = 1;
   if (typeof style.radius === 'function') {
     radius = style.radius(ctx.zoom); //Allows for scale dependent rednering
@@ -158,6 +159,10 @@ MVTFeature.prototype._drawPoint = function(ctx, coordsArray, style) {
   g.arc(p.x, p.y, radius, 0, Math.PI * 2);
   g.closePath();
   g.fill();
+
+  if(style.lineWidth) g.lineWidth = style.lineWidth;
+  if(style.strokeStyle) g.strokeStyle = style.strokeStyle;
+
   g.restore();
   part.paths.push([p]);
 };

@@ -4,8 +4,6 @@ var Point = require('point-geometry');
 
 var Util = require('./MVTUtil');
 var MVTLayer = require('./MVTLayer');
-var MVTPointLayer = require('./MVTPointLayer');
-
 
 module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
