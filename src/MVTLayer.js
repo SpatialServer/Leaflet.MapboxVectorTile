@@ -116,9 +116,6 @@ module.exports = L.TileLayer.Canvas.extend({
       this._initializeFeaturesHash(ctx);
     }
 
-    //Clear tile -- TODO: Add flag so this only happens when a layer is being turned back on after being hidden
-    if(ctx.canvas) ctx.canvas.width = ctx.canvas.width;
-
     var features = vtl.parsedFeatures;
     for (var i = 0, len = features.length; i < len; i++) {
       var vtf = features[i]; //vector tile feature
@@ -191,7 +188,7 @@ module.exports = L.TileLayer.Canvas.extend({
     var features = this._canvasIDToFeaturesForZoom[evt.tileID].features;
     for (var i = 0; i < features.length; i++) {
       var feature = features[i];
-      var paths = feature.getPathsForTile(evt.tileID, this._map.getZoom());
+      var paths = feature.getPathsForTile(evt.tileID);
       for (var j = 0; j < paths.length; j++) {
         if (this._isPointInPoly(tilePoint, paths[j])) {
           if (feature.toggleEnabled) {
@@ -238,12 +235,8 @@ module.exports = L.TileLayer.Canvas.extend({
   },
 
   redrawTile: function(canvasID) {
-    console.log('redrawTile ' + canvasID);
-
     //Get the features for this tile, and redraw them.
     var features = this._canvasIDToFeaturesForZoom[canvasID].features;
-
-    //if z-index function is specified, sort the features so they draw in the correct order, bottom points draw first.
 
     for (var i = 0; i < features.length; i++) {
       var feature = features[i];

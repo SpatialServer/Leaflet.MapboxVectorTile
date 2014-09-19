@@ -32,8 +32,6 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
   //An object to store the paths and contexts for this feature
   this.tiles = {};
 
-  if (!this.tiles[ctx.zoom]) this.tiles[ctx.zoom] = {};
-
   this.style = style;
 
   this._canvasIDToFeaturesForZoom = {};
@@ -49,10 +47,14 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
 
 MVTFeature.prototype.draw = function(canvasID) {
   //Get the info from the tiles list
-  var tileInfo =  this.tiles[this.map.getZoom()][canvasID];
+  var tileInfo =  this.tiles[canvasID];
 
   var vtf = tileInfo.vtf;
   var ctx = tileInfo.ctx;
+
+  if (ctx.canvas._layer.name !== this.mvtLayer.name) {
+    console.error('ctx.canvas._layer.name !== this.mvtLayer.name');
+  }
 
   if (this.selected) {
     var style = this.style.selected || this.style;
@@ -82,22 +84,19 @@ MVTFeature.prototype.draw = function(canvasID) {
 
 };
 
-MVTFeature.prototype.getPathsForTile = function(canvasID, zoom) {
+MVTFeature.prototype.getPathsForTile = function(canvasID) {
   //Get the info from the parts list
-  return this.tiles[zoom][canvasID].paths;
+  return this.tiles[canvasID].paths;
 };
 
 MVTFeature.prototype.addTileFeature = function(vtf, ctx) {
 
   if (ctx.canvas._layer.name !== 'GAUL0') {
-    console.log('not GAUL0');
+    console.error('not GAUL0');
   }
-  //Store the parts of the feature for a particular zoom level
-  var zoom = ctx.zoom;
-  if (!this.tiles[ctx.zoom]) this.tiles[ctx.zoom] = {};
 
   //Store the important items in the parts list
-  this.tiles[zoom][ctx.id] = {
+  this.tiles[ctx.id] = {
     ctx: ctx,
     vtf: vtf,
     paths: []
@@ -112,8 +111,7 @@ MVTFeature.prototype.addTileFeature = function(vtf, ctx) {
  */
 function redrawTiles(self) {
   //Redraw the whole tile, not just this vtf
-  var zoom = self.map.getZoom();
-  var tiles = self.tiles[zoom];
+  var tiles = self.tiles;
   var mvtLayer = self.mvtLayer;
 
   for (var id in tiles) {
@@ -164,7 +162,7 @@ MVTFeature.prototype.on = function(eventType, callback) {
 MVTFeature.prototype._drawPoint = function(ctx, coordsArray, style) {
   if (!style) return;
 
-  var part = this.tiles[ctx.zoom][ctx.id];
+  var part = this.tiles[ctx.id];
 
   var radius = 1;
   if (typeof style.radius === 'function') {
@@ -261,7 +259,7 @@ MVTFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
   g.beginPath();
 
   var projCoords = [];
-  var part = this.tiles[ctx.zoom][ctx.id];
+  var tile = this.tiles[ctx.id];
 
   var featureLabel = this.featureLabel;
   if (featureLabel) {
@@ -286,7 +284,7 @@ MVTFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
     g.stroke();
   }
 
-  part.paths.push(projCoords);
+  tile.paths.push(projCoords);
 
 };
 
