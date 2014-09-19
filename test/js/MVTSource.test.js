@@ -30,6 +30,25 @@ test('create a map, loading a tile', function(t) {
   }, 1000);
 });
 
+test('basic map, zoom in, zoom out, check for drawn tiles', function(t) {
+  var basicOpts = require('../fixtures/basicStaticLabel.js');
+  document.body.innerHTML += '<div id="map"></div>';
+  var map = L.map('map').setView([0,39], 6); // africa
+  var mvtSource = new MVTSource(basicOpts);
+  L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 18
+  }).addTo(map);
+  map.addLayer(mvtSource);
+
+  map.zoomIn();
+  map.zoomOut();
+
+  t.plan(1);
+  setTimeout(function() {
+    t.ok(mvtSource.loadedTiles['6:38:32'], 'tile 6:38:32 loaded');
+  }, 1000);
+});
+
 test('create a confetti map, loading a confetti tile', function(t) {
   var confetti = require('../fixtures/confetti_datasource.js');
   document.body.innerHTML += '<div id="map"></div>';
