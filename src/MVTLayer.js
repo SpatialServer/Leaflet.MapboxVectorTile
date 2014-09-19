@@ -220,15 +220,6 @@ module.exports = L.TileLayer.Canvas.extend({
 //  explicit way of clearing a canvas (better perf)
     var context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
-
-    console.log(['clearTile ' + id, {
-      id: id,
-      canvasId: canvasId,
-      canvas: canvas,
-      layerName: this.name,
-      leafletId: this._leaflet_id
-    }]);
-
   },
 
   clearLayerFeatureHash: function(){
