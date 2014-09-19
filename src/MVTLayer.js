@@ -57,13 +57,12 @@ module.exports = L.TileLayer.Canvas.extend({
       this.features = {};
     }
 
-    //this._resetCanvasIDToFeaturesForZoomState(ctx.id, canvas, zoom);
   },
 
   _initializeFeaturesHash: function(ctx){
     this._canvasIDToFeatures[ctx.id] = {};
-    this._canvasIDToFeatures[ctx.id]['features'] = [];
-    this._canvasIDToFeatures[ctx.id]['canvas'] = ctx.canvas;
+    this._canvasIDToFeatures[ctx.id].features = [];
+    this._canvasIDToFeatures[ctx.id].canvas = ctx.canvas;
   },
 
   _draw: function(ctx) {
@@ -244,7 +243,7 @@ module.exports = L.TileLayer.Canvas.extend({
     }
   },
 
-  _resetCanvasIDToFeaturesForZoomState: function(canvasID, canvas) {
+  _resetCanvasIDToFeatures: function(canvasID, canvas) {
 
     this._canvasIDToFeatures[canvasID] = {};
     this._canvasIDToFeatures[canvasID].features = [];

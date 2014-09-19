@@ -50,7 +50,8 @@ MVTFeature.prototype.draw = function(canvasID) {
   var ctx = tileInfo.ctx;
 
   if (ctx.canvas._layer.name !== this.mvtLayer.name) {
-    console.error('ctx.canvas._layer.name !== this.mvtLayer.name');
+    console.error('ctx.canvas._layer.name !== this.mvtLayer.name FINDING CORRECT CANVAS....');
+    ctx.canvas = this.mvtLayer._canvasIDToFeatures[canvasID].canvas;
   }
 
   if (this.selected) {
@@ -87,10 +88,6 @@ MVTFeature.prototype.getPathsForTile = function(canvasID) {
 };
 
 MVTFeature.prototype.addTileFeature = function(vtf, ctx) {
-
-  if (ctx.canvas._layer.name !== 'GAUL0') {
-    console.error('not GAUL0');
-  }
 
   //Store the important items in the parts list
   this.tiles[ctx.id] = {
