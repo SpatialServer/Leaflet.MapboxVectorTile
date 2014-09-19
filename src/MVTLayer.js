@@ -78,7 +78,7 @@ module.exports = L.TileLayer.Canvas.extend({
 
     if(ctx){
       parentCtx.canvas = ctx;
-      this.redrawTile(parentCtx.id, parentCtx.zoom);
+      this.redrawTile(parentCtx.id);
       return;
     }
 
@@ -96,7 +96,7 @@ module.exports = L.TileLayer.Canvas.extend({
         //When it finishes, do this.
         ctx = self._tiles[tilePoint.x + ":" + tilePoint.y];
         parentCtx.canvas = ctx;
-        self.redrawTile(parentCtx.id, parentCtx.zoom);
+        self.redrawTile(parentCtx.id);
 
       }, //when done, go to next flow
       2000); //The Timeout milliseconds.  After this, give up and move on
@@ -138,6 +138,15 @@ module.exports = L.TileLayer.Canvas.extend({
       var uniqueID = self.options.getIDForLayerFeature(vtf) || i;
       var mvtFeature = self.features[uniqueID];
 
+      /**
+       * Use layerOrdering function to apply a zIndex property to each vtf.  This is defined in
+       * TileLayer.MVTSource.js.  Used below to sort features.npm
+       */
+      var layerOrdering = self.options.layerOrdering;
+      if (typeof layerOrdering === 'function') {
+        layerOrdering(vtf, ctx); //Applies a custom property to the feature, which is used after we're thru iterating to sort
+      }
+
       //Create a new MVTFeature if one doesn't already exist for this feature.
       if (!mvtFeature) {
         //Get a style for the feature - set it just once for each new MVTFeature
@@ -158,15 +167,19 @@ module.exports = L.TileLayer.Canvas.extend({
 
     }
 
-    //If a z-order function is specified, wait unitl all features have been iterated over until drawing (here)
-    self.redrawTile(ctx.id, ctx.zoom);
-
-
-    for (var j = 0, len = self.featuresWithLabels.length; j < len; j++) {
-      var feat = self.featuresWithLabels[j];
-      debug.feat = feat;
-
+    /**
+     * Apply sorting (zIndex) on feature if there is a function defined in the options object
+     * of TileLayer.MVTSource.js
+     */
+    var layerOrdering = self.options.layerOrdering;
+    if (layerOrdering) {
+      //We've assigned the custom zIndex property when iterating above.  Now just sort.
+      self._canvasIDToFeatures[ctx.id].features = self._canvasIDToFeatures[ctx.id].features.sort(function(a, b) {
+        return -(b.properties.zIndex - a.properties.zIndex)
+      });
     }
+
+    self.redrawTile(ctx.id);
   },
 
   // NOTE: a placeholder for a function that, given a feature, returns a style object used to render the feature itself

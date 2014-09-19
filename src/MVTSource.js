@@ -191,7 +191,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     };
 
     xhr.onerror = function() {
-      console.log("xhr error: " + xhr.errorCode)
+      console.log("xhr error: " + xhr.status)
     };
 
     xhr.open('GET', url, true); //async is true
