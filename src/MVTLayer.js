@@ -209,6 +209,9 @@ module.exports = L.TileLayer.Canvas.extend({
     //id is the entire zoom:x:y.  we just want x:y.
     var ca = id.split(":");
     var canvasId = ca[1] + ":" + ca[2];
+    if (typeof this._tiles[canvasId] === 'undefined') {
+      return;
+    }
     var canvas = this._tiles[canvasId];
 
 //  old school way of clearing a canvas
