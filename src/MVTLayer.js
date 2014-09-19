@@ -244,7 +244,7 @@ module.exports = L.TileLayer.Canvas.extend({
     }
   },
 
-  _resetCanvasIDToFeaturesForZoomState: function(canvasID, canvas, zoom) {
+  _resetCanvasIDToFeaturesForZoomState: function(canvasID, canvas) {
 
     this._canvasIDToFeaturesForZoom[canvasID] = {};
     this._canvasIDToFeaturesForZoom[canvasID].features = [];

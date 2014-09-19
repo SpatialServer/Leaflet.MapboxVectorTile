@@ -34,9 +34,6 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
 
   this.style = style;
 
-  this._canvasIDToFeaturesForZoom = {};
-  this._eventHandlers = {};
-
   //Add to the collection
   this.addTileFeature(vtf, ctx);
 
