@@ -33,7 +33,7 @@ module.exports = L.TileLayer.Canvas.extend({
 
     this.style = options.style;
     this.name = options.name;
-    this._canvasIDToFeaturesForZoom = {};
+    this._canvasIDToFeatures = {};
     this.visible = true;
     this.features = {};
     this.featuresWithLabels = [];
@@ -50,7 +50,7 @@ module.exports = L.TileLayer.Canvas.extend({
 
     ctx.id = Util.getContextID(ctx);
 
-    if (!this._canvasIDToFeaturesForZoom[ctx.id]) {
+    if (!this._canvasIDToFeatures[ctx.id]) {
       this._initializeFeaturesHash(ctx);
     }
     if (!this.features) {
@@ -61,9 +61,9 @@ module.exports = L.TileLayer.Canvas.extend({
   },
 
   _initializeFeaturesHash: function(ctx){
-    this._canvasIDToFeaturesForZoom[ctx.id] = {};
-    this._canvasIDToFeaturesForZoom[ctx.id]['features'] = [];
-    this._canvasIDToFeaturesForZoom[ctx.id]['canvas'] = ctx.canvas;
+    this._canvasIDToFeatures[ctx.id] = {};
+    this._canvasIDToFeatures[ctx.id]['features'] = [];
+    this._canvasIDToFeatures[ctx.id]['canvas'] = ctx.canvas;
   },
 
   _draw: function(ctx) {
@@ -112,7 +112,7 @@ module.exports = L.TileLayer.Canvas.extend({
     ctx.canvas = self._tiles[tilePoint.x + ":" + tilePoint.y];
 
     //Initialize this tile's feature storage hash, if it hasn't already been created.  Used for when filters are updated, and features are cleared to prepare for a fresh redraw.
-    if (!this._canvasIDToFeaturesForZoom[ctx.id]) {
+    if (!this._canvasIDToFeatures[ctx.id]) {
       this._initializeFeaturesHash(ctx);
     }
 
@@ -155,7 +155,7 @@ module.exports = L.TileLayer.Canvas.extend({
       }
 
       //Associate & Save this feature with this tile for later
-      if(ctx && ctx.id) self._canvasIDToFeaturesForZoom[ctx.id]['features'].push(mvtFeature);
+      if(ctx && ctx.id) self._canvasIDToFeatures[ctx.id]['features'].push(mvtFeature);
 
     }
 
@@ -185,7 +185,7 @@ module.exports = L.TileLayer.Canvas.extend({
     var y = evt.layerPoint.y - canvas._leaflet_pos.y;
 
     var tilePoint = {x: x, y: y};
-    var features = this._canvasIDToFeaturesForZoom[evt.tileID].features;
+    var features = this._canvasIDToFeatures[evt.tileID].features;
     for (var i = 0; i < features.length; i++) {
       var feature = features[i];
       var paths = feature.getPathsForTile(evt.tileID);
@@ -230,13 +230,13 @@ module.exports = L.TileLayer.Canvas.extend({
   },
 
   clearLayerFeatureHash: function(){
-    this._canvasIDToFeaturesForZoom = {}; //Get rid of all saved features
+    this._canvasIDToFeatures = {}; //Get rid of all saved features
     this.features = {};
   },
 
   redrawTile: function(canvasID) {
     //Get the features for this tile, and redraw them.
-    var features = this._canvasIDToFeaturesForZoom[canvasID].features;
+    var features = this._canvasIDToFeatures[canvasID].features;
 
     for (var i = 0; i < features.length; i++) {
       var feature = features[i];
@@ -246,9 +246,9 @@ module.exports = L.TileLayer.Canvas.extend({
 
   _resetCanvasIDToFeaturesForZoomState: function(canvasID, canvas) {
 
-    this._canvasIDToFeaturesForZoom[canvasID] = {};
-    this._canvasIDToFeaturesForZoom[canvasID].features = [];
-    this._canvasIDToFeaturesForZoom[canvasID].canvas = canvas;
+    this._canvasIDToFeatures[canvasID] = {};
+    this._canvasIDToFeatures[canvasID].features = [];
+    this._canvasIDToFeatures[canvasID].canvas = canvas;
 
   },
 
