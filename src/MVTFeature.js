@@ -162,7 +162,7 @@ MVTFeature.prototype.on = function(eventType, callback) {
 MVTFeature.prototype._drawPoint = function(ctx, coordsArray, style) {
   if (!style) return;
 
-  var part = this.tiles[ctx.id];
+  var tile = this.tiles[ctx.id];
 
   var radius = 1;
   if (typeof style.radius === 'function') {
@@ -181,7 +181,7 @@ MVTFeature.prototype._drawPoint = function(ctx, coordsArray, style) {
   g.closePath();
   g.fill();
   g.restore();
-  part.paths.push([p]);
+  tile.paths.push([p]);
 };
 
 MVTFeature.prototype._drawStaticLabel = function(ctx, coordsArray, style) {
@@ -226,7 +226,7 @@ MVTFeature.prototype._drawLineString = function(ctx, coordsArray, style) {
   g.beginPath();
 
   var projCoords = [];
-  var part = this.tiles[ctx.zoom][ctx.id];
+  var tile = this.tiles[ctx.id];
 
   for (var gidx in coordsArray) {
     var coords = coordsArray[gidx];
@@ -242,7 +242,7 @@ MVTFeature.prototype._drawLineString = function(ctx, coordsArray, style) {
   g.stroke();
   g.restore();
 
-  part.paths.push(projCoords);
+  tile.paths.push(projCoords);
 };
 
 MVTFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
