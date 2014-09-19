@@ -1,27 +1,12 @@
-/**
- * Created by Nicholas Hallahan <nhallahan@spatialdev.com>
- *       on 8/15/14.
- */
-
-var opts = {
+module.exports = {
   url: "http://spatialserver.spatialdev.com/services/vector-tiles/gadm2014kenya/{z}/{x}/{y}.pbf",
   debug: true,
-  clickableLayers: ['gadm0', 'gadm1', 'gadm2', 'gadm3', 'gadm4', 'gadm5'],
+  clickableLayers: ['gadm1'],
 
   getIDForLayerFeature: function(feature) {
     return feature.properties.id;
   },
 
-  /**
-   * The filter function gets called when iterating though each vector tile feature (vtf). You have access
-   * to every property associated with a given feature (the feature, and the layer). You can also filter
-   * based of the context (each tile that the feature is drawn onto).
-   *
-   * Returning false skips over the feature and it is not drawn.
-   *
-   * @param feature
-   * @returns {boolean}
-   */
   filter: function(feature, context) {
     if (feature.layer.name === 'gadm1_label' || feature.layer.name === 'gadm1') {
       return true;
@@ -30,18 +15,9 @@ var opts = {
     return false;
   },
 
-  /**
-   * When we want to link events between layers, like clicking on a label and a
-   * corresponding polygon freature, this will return the corresponding mapping
-   * between layers. This provides knowledge of which other feature a given feature
-   * is linked to.
-   *
-   * @param layerName  the layer we want to know the linked layer from
-   * @returns {string} returns corresponding linked layer
-   */
   layerLink: function(layerName) {
     if (layerName.indexOf('_label') > -1) {
-      return layerName.replace('_label','');
+      return layerName.replace('_label', '');
     }
     return layerName + '_label';
   },
@@ -87,7 +63,7 @@ var opts = {
       style.staticLabel = function() {
         var style = {
           html: feature.properties.name,
-          iconSize: [125,30],
+          iconSize: [125, 30],
           cssClass: 'label-icon-text'
         };
         return style;
@@ -96,4 +72,4 @@ var opts = {
 
     return style;
   }
-}
+};

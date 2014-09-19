@@ -172,7 +172,7 @@ L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 
-var pbfSource = new L.TileLayer.PBFSource({
+var pbfSource = new L.TileLayer.MVTSource({
     url: "http://localhost:3001/services/vector-tiles/GADM/{z}/{x}/{y}.pbf",
 //        url: "https://a.tiles.mapbox.com/v3/mapbox.mapbox-terrain-v1,mapbox.mapbox-streets-v5/{z}/{x}/{y}.vector.pbf",
     debug: true,
@@ -213,13 +213,13 @@ var pbfSource = new L.TileLayer.PBFSource({
         return false;
     }
 });
-debug.pbfSource = pbfSource;
+debug.mvtSource = pbfSource;
 
 //Globals that we can change later.
 var fillColor = 'rgba(149,139,255,0.4)';
 var strokeColor = 'rgb(20,20,20)';
 
-pbfSource.styleFor = pbfStyle;
+pbfSource.style = pbfStyle;
 
 function pbfStyle(feature) {
     var style = {};
@@ -314,7 +314,7 @@ map.on("click", function(e) {
 
 map.on("layerremove", function(removed){
     //This is the layer that was removed.
-    //If it is a TileLayer.PBFSource, then call a method to actually remove the children, too.
+    //If it is a TileLayer.MVTSource, then call a method to actually remove the children, too.
     if(removed.layer.removeChildLayers){
         removed.layer.removeChildLayers(map);
     }

@@ -1,16 +1,11 @@
 var VectorTile = require('vector-tile').VectorTile;
-var VectorTileFeature = require('vector-tile').VectorTileFeature;
-var VectorTileLayer = require('vector-tile').VectorTileLayer;
 var Protobuf = require('pbf');
 var Point = require('point-geometry');
-
-var Util = require('./PBFUtil');
-var PBFFeature = require('./PBFFeature');
-L.TileLayer.PBFLayer = require('./PBFLayer');
-L.TileLayer.PBFPointLayer = require('./PBFPointLayer');
+var Util = require('./MVTUtil');
+var MVTLayer = require('./MVTLayer');
 
 
-module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
+module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
   options: {
     debug: false,
@@ -22,7 +17,45 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
   layers: {}, //Keep a list of the layers contained in the PBFs
   processedTiles: {}, //Keep a list of tiles that have been processed already
   _eventHandlers: {},
-  styleFor: function() {},
+
+  style: function(feature) {
+    var style = {};
+
+    var type = feature.type;
+    switch (type) {
+      case 1: //'Point'
+        style.color = 'rgba(49,79,79,1)';
+        style.radius = 5;
+        style.selected = {
+          color: 'rgba(255,255,0,0.5)',
+          radius: 6
+        };
+        break;
+      case 2: //'LineString'
+        style.color = 'rgba(161,217,155,0.8)';
+        style.size = 3;
+        style.selected = {
+          color: 'rgba(255,25,0,0.5)',
+          size: 4
+        };
+        break;
+      case 3: //'Polygon'
+        style.color = fillColor;
+        style.outline = {
+          color: strokeColor,
+          size: 1
+        };
+        style.selected = {
+          color: 'rgba(255,140,0,0.3)',
+          outline: {
+            color: 'rgba(255,140,0,1)',
+            size: 2
+          }
+        };
+        break;
+    }
+    return style;
+  },
 
 
   initialize: function(options) {
@@ -37,7 +70,9 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
     // thats that have been loaded and drawn
     this.loadedTiles = {};
 
-    this.styleFor = options.styleFor;
+    if (typeof options.style === 'function') {
+      this.style = options.style;
+    }
 
     this.layerLink = options.layerLink;
 
@@ -49,12 +84,20 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
 
   onAdd: function(map) {
     var self = this;
+    self.map = map;
     L.TileLayer.Canvas.prototype.onAdd.call(this, map);
 
-//    determineActiveTiles(self, map);
-//    map.on('moveend', function(evt) {
-//      determineActiveTiles(self, map);
-//    });
+    map.on('click', function(e) {
+      self.onClick(e);
+    });
+
+    map.on("layerremove", function(removed) {
+      //This is the layer that was removed.
+      //If it is a TileLayer.MVTSource, then call a method to actually remove the children, too.
+      if (removed.layer.removeChildLayers) {
+        removed.layer.removeChildLayers(map);
+      }
+    });
 
     if (typeof DynamicLabel === 'function' ) {
       this.dynamicLabel = new DynamicLabel(map, this, {});
@@ -117,15 +160,15 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
   _draw: function(ctx) {
     var self = this;
 
-    //This works to skip fetching and processing tiles if they've already been processed.
-    var vectorTile = this.processedTiles[ctx.zoom][ctx.id];
-    //if we've already parsed it, don't get it again.
-    if(vectorTile){
-      console.log("Skipping fetching " + ctx.id);
-      self.parseVectorTile(parseVT(vectorTile), ctx, true);
-      self.reduceTilesToProcessCount();
-      return;
-    }
+//    //This works to skip fetching and processing tiles if they've already been processed.
+//    var vectorTile = this.processedTiles[ctx.zoom][ctx.id];
+//    //if we've already parsed it, don't get it again.
+//    if(vectorTile){
+//      console.log("Skipping fetching " + ctx.id);
+//      self.parseVectorTile(parseVT(vectorTile), ctx, true);
+//      self.reduceTilesToProcessCount();
+//      return;
+//    }
 
     if (!this.options.url) return;
     var url = self.options.url.replace("{z}", ctx.zoom).replace("{x}", ctx.tile.x).replace("{y}", ctx.tile.y);
@@ -148,8 +191,8 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
     };
 
     xhr.onerror = function() {
-      console.log("xhr error: " + xhr.errorCode)
-    }
+      console.log("xhr error: " + xhr.status)
+    };
 
     xhr.open('GET', url, true); //async is true
     xhr.responseType = 'arraybuffer';
@@ -173,8 +216,8 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
     for (var key in vt.layers) {
       var lyr = vt.layers[key];
       if (!self.layers[key]) {
-        //Create PBFLayer or PBFPointLayer for user
-        self.layers[key] = self.createPBFLayer(key, lyr.parsedFeatures[0].type || null);
+        //Create MVTLayer or MVTPointLayer for user
+        self.layers[key] = self.createMVTLayer(key, lyr.parsedFeatures[0].type || null);
       }
 
       //If layer is marked as visible, examine the contents.
@@ -197,7 +240,7 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
     this.bringToFront();
   },
 
-  createPBFLayer: function(key, type) {
+  createMVTLayer: function(key, type) {
     var self = this;
 
     var getIDForLayerFeature;
@@ -207,30 +250,15 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
       getIDForLayerFeature = Util.getIDForLayerFeature;
     }
 
-    //Take the layer and create a new PBFLayer or PBFPointLayer if one doesn't exist.
-    var layer;
-
-//    if(type === 1){
-//      //Point Layer
-//      layer = new L.TileLayer.PBFPointLayer(self, {
-//        getIDForLayerFeature: getIDForLayerFeature,
-//        filter: self.options.filter,
-//        layerOrdering: self.options.layerOrdering,
-//        styleFor: self.styleFor,
-//        name: key,
-//        asynch: true
-//      }).addTo(self._map);
-//    }else{
-      //Polygon/Line Layer
-      layer = new L.TileLayer.PBFLayer(self, {
+    //Take the layer and create a new MVTLayer or MVTPointLayer if one doesn't exist.
+    var layer = new MVTLayer(self, {
         getIDForLayerFeature: getIDForLayerFeature,
         filter: self.options.filter,
         layerOrdering: self.options.layerOrdering,
-        styleFor: self.styleFor,
+        style: self.style,
         name: key,
         asynch: true
-      }).addTo(self._map);
-    //}
+      }).addTo(self.map);
 
     return layer;
   },
@@ -268,7 +296,7 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
   },
 
   onClick: function(evt, cb) {
-    //Here, pass the event on to the child PBFLayer and have it do the hit test and handle the result.
+    //Here, pass the event on to the child MVTLayer and have it do the hit test and handle the result.
     var self = this;
 
     evt.tileID =  getTileURL(evt.latlng.lat, evt.latlng.lng, this._map.getZoom());
@@ -277,7 +305,9 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
     if(this.options.clickableLayers.length == 0) {
       var names = Object.keys(self.layers);
       self.layers[names[0]].handleClickEvent(evt, function (evt) {
-        cb(evt);
+        if (typeof cb === 'function') {
+          cb(evt);
+        }
       });
     }
     else{
@@ -285,11 +315,38 @@ module.exports = L.TileLayer.PBFSource = L.TileLayer.Canvas.extend({
         var layer = this.layers[key];
         if(self.options.clickableLayers.indexOf(key) > -1){
           layer.handleClickEvent(evt, function(evt) {
-            cb(evt);
+            if (typeof cb === 'function') {
+              cb(evt);
+            }
           });
         }
       }
     }
+  },
+
+  setFilter: function(filterFunction, layerName) {
+    //take in a new filter function.
+    //Propagate to child layers.
+
+    //Add filter to all child layers if no layer is specified.
+    for (var key in this.layers) {
+      var layer = this.layers[key];
+
+      if (layerName){
+        if(key.toLowerCase() == layerName.toLowerCase()){
+          layer.options.filter = filterFunction; //Assign filter to child layer, only if name matches
+          //After filter is set, the old feature hashes are invalid.  Clear them for next draw.
+          layer.clearLayerFeatureHash();
+        }
+      }
+      else{
+        layer.options.filter = filterFunction; //Assign filter to child layer
+        //After filter is set, the old feature hashes are invalid.  Clear them for next draw.
+        layer.clearLayerFeatureHash();
+      }
+    }
+
+
   }
 });
 

@@ -5,22 +5,22 @@
 
 var StaticLabel = require('./StaticLabel/StaticLabel.js');
 
-module.exports = PBFFeature;
+module.exports = MVTFeature;
 
-function PBFFeature(pbfLayer, vtf, ctx, id, style) {
+function MVTFeature(mvtLayer, vtf, ctx, id, style) {
   if (!vtf) return null;
 
   for (var key in vtf) {
     this[key] = vtf[key];
   }
 
-  this.pbfLayer = pbfLayer;
-  this.pbfSource = pbfLayer.pbfSource;
-  this.map = pbfLayer.pbfSource._map;
+  this.mvtLayer = mvtLayer;
+  this.mvtSource = mvtLayer.mvtSource;
+  this.map = mvtLayer.mvtSource._map;
 
   this.id = id;
 
-  this.layerLink = this.pbfSource.layerLink;
+  this.layerLink = this.mvtSource.layerLink;
   this.toggleEnabled = true;
   this.selected = false;
 
@@ -32,22 +32,28 @@ function PBFFeature(pbfLayer, vtf, ctx, id, style) {
   //An object to store the paths and contexts for this feature
   this.tiles = {};
 
-  if (!this.tiles[ctx.zoom]) this.tiles[ctx.zoom] = {};
-
   this.style = style;
-
-  this._canvasIDToFeaturesForZoom = {};
-  this._eventHandlers = {};
 
   //Add to the collection
   this.addTileFeature(vtf, ctx);
 
   if (typeof style.dynamicLabel === 'function') {
-    this.featureLabel = this.pbfSource.dynamicLabel.createFeature(this);
+    this.featureLabel = this.mvtSource.dynamicLabel.createFeature(this);
   }
 }
 
-PBFFeature.prototype.draw = function(vtf, ctx) {
+MVTFeature.prototype.draw = function(canvasID) {
+  //Get the info from the tiles list
+  var tileInfo =  this.tiles[canvasID];
+
+  var vtf = tileInfo.vtf;
+  var ctx = tileInfo.ctx;
+
+  if (ctx.canvas._layer.name !== this.mvtLayer.name) {
+    console.error('ctx.canvas._layer.name !== this.mvtLayer.name FINDING CORRECT CANVAS....');
+    ctx.canvas = this.mvtLayer._canvasIDToFeatures[canvasID].canvas;
+  }
+
   if (this.selected) {
     var style = this.style.selected || this.style;
   } else {
@@ -76,38 +82,48 @@ PBFFeature.prototype.draw = function(vtf, ctx) {
 
 };
 
-PBFFeature.prototype.getPathsForTile = function(canvasID, zoom) {
+MVTFeature.prototype.getPathsForTile = function(canvasID) {
   //Get the info from the parts list
-  return this.tiles[zoom][canvasID].paths;
+  return this.tiles[canvasID].paths;
 };
 
-PBFFeature.prototype.addTileFeature = function(vtf, ctx) {
-
-  //Store the parts of the feature for a particular zoom level
-  var zoom = ctx.zoom;
-  if (!this.tiles[ctx.zoom]) this.tiles[ctx.zoom] = {};
+MVTFeature.prototype.addTileFeature = function(vtf, ctx) {
 
   //Store the important items in the parts list
-  this.tiles[zoom][ctx.id] = {
+  this.tiles[ctx.id] = {
     ctx: ctx,
     vtf: vtf,
     paths: []
   };
 };
 
+/**
+ * Redraws all of the tiles associated with a feature. Useful for
+ * style change and toggling.
+ *
+ * @param self
+ */
+function redrawTiles(self) {
+  //Redraw the whole tile, not just this vtf
+  var tiles = self.tiles;
+  var mvtLayer = self.mvtLayer;
 
-PBFFeature.prototype.getTileInfo = function(canvasID, zoom) {
-  //Get the info from the parts list
-  return this.tiles[zoom][canvasID];
-};
+  for (var id in tiles) {
+    //Clear the tile
+    mvtLayer.clearTile(id);
 
-PBFFeature.prototype.setStyle = function(style) {
+    //Redraw the tile
+    mvtLayer.redrawTile(id);
+  }
+}
+
+MVTFeature.prototype.setStyle = function(style) {
   //Set this feature's style and redraw all canvases that this thing is a part of
   this.style = style;
-  this._eventHandlers["styleChanged"](this.tiles);
+  redrawTiles(this);
 };
 
-PBFFeature.prototype.toggle = function() {
+MVTFeature.prototype.toggle = function() {
   if (this.selected) {
     this.deselect();
   } else {
@@ -115,33 +131,34 @@ PBFFeature.prototype.toggle = function() {
   }
 };
 
-PBFFeature.prototype.select = function() {
+MVTFeature.prototype.select = function() {
   this.selected = true;
-  this._eventHandlers["styleChanged"](this.tiles);
+  redrawTiles(this);
   var linkedFeature = this.linkedFeature();
-  if (linkedFeature.staticLabel && !linkedFeature.staticLabel.selected) {
+  if (linkedFeature && linkedFeature.staticLabel && !linkedFeature.staticLabel.selected) {
     linkedFeature.staticLabel.select();
   }
 };
 
-PBFFeature.prototype.deselect = function() {
+MVTFeature.prototype.deselect = function() {
   this.selected = false;
-  this._eventHandlers["styleChanged"](this.tiles);
+  redrawTiles(this);
   var linkedFeature = this.linkedFeature();
-  if (linkedFeature.staticLabel && linkedFeature.staticLabel.selected) {
+  if (linkedFeature && linkedFeature.staticLabel && linkedFeature.staticLabel.selected) {
     linkedFeature.staticLabel.deselect();
   }
 };
 
-PBFFeature.prototype.on = function(eventType, callback) {
+MVTFeature.prototype.on = function(eventType, callback) {
   this._eventHandlers[eventType] = callback;
 };
 
-PBFFeature.prototype._drawPoint = function(ctx, coordsArray, style) {
+MVTFeature.prototype._drawPoint = function(ctx, coordsArray, style) {
   if (!style) return;
 
-  var part = this.tiles[ctx.zoom][ctx.id];
+  var tile = this.tiles[ctx.id];
 
+  //Get radius
   var radius = 1;
   if (typeof style.radius === 'function') {
     radius = style.radius(ctx.zoom); //Allows for scale dependent rednering
@@ -158,11 +175,18 @@ PBFFeature.prototype._drawPoint = function(ctx, coordsArray, style) {
   g.arc(p.x, p.y, radius, 0, Math.PI * 2);
   g.closePath();
   g.fill();
+
+  if(style.lineWidth && style.strokeStyle){
+    g.lineWidth = style.lineWidth;
+    g.strokeStyle = style.strokeStyle;
+    g.stroke();
+  }
+
   g.restore();
-  part.paths.push([p]);
+  tile.paths.push([p]);
 };
 
-PBFFeature.prototype._drawStaticLabel = function(ctx, coordsArray, style) {
+MVTFeature.prototype._drawStaticLabel = function(ctx, coordsArray, style) {
   if (!style) return;
 
   var vecPt = this._tilePoint(coordsArray[0][0]);
@@ -186,7 +210,7 @@ PBFFeature.prototype._drawStaticLabel = function(ctx, coordsArray, style) {
  * @param extent
  * @param tileSize
  */
-PBFFeature.prototype._project = function(vecPt, tileX, tileY, extent, tileSize) {
+MVTFeature.prototype._project = function(vecPt, tileX, tileY, extent, tileSize) {
   var xOffset = tileX * tileSize;
   var yOffset = tileY * tileSize;
   return {
@@ -195,7 +219,7 @@ PBFFeature.prototype._project = function(vecPt, tileX, tileY, extent, tileSize) 
   };
 };
 
-PBFFeature.prototype._drawLineString = function(ctx, coordsArray, style) {
+MVTFeature.prototype._drawLineString = function(ctx, coordsArray, style) {
   if (!style) return;
 
   var g = ctx.canvas.getContext('2d');
@@ -204,7 +228,7 @@ PBFFeature.prototype._drawLineString = function(ctx, coordsArray, style) {
   g.beginPath();
 
   var projCoords = [];
-  var part = this.tiles[ctx.zoom][ctx.id];
+  var tile = this.tiles[ctx.id];
 
   for (var gidx in coordsArray) {
     var coords = coordsArray[gidx];
@@ -220,10 +244,10 @@ PBFFeature.prototype._drawLineString = function(ctx, coordsArray, style) {
   g.stroke();
   g.restore();
 
-  part.paths.push(projCoords);
+  tile.paths.push(projCoords);
 };
 
-PBFFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
+MVTFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
   if (!style) return;
   if (!ctx.canvas) return;
 
@@ -237,7 +261,7 @@ PBFFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
   g.beginPath();
 
   var projCoords = [];
-  var part = this.tiles[ctx.zoom][ctx.id];
+  var tile = this.tiles[ctx.id];
 
   var featureLabel = this.featureLabel;
   if (featureLabel) {
@@ -262,7 +286,7 @@ PBFFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
     g.stroke();
   }
 
-  part.paths.push(projCoords);
+  tile.paths.push(projCoords);
 
 };
 
@@ -274,12 +298,16 @@ PBFFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
  * @returns {eGeomType.Point}
  * @private
  */
-PBFFeature.prototype._tilePoint = function(coords) {
+MVTFeature.prototype._tilePoint = function(coords) {
   return new L.Point(coords.x / this.divisor, coords.y / this.divisor);
 };
 
-PBFFeature.prototype.linkedFeature = function() {
-  var linkedLayer = this.pbfLayer.linkedLayer();
-  var linkedFeature = linkedLayer.features[this.id];
-  return linkedFeature;
+MVTFeature.prototype.linkedFeature = function() {
+  var linkedLayer = this.mvtLayer.linkedLayer();
+  if(linkedLayer){
+    var linkedFeature = linkedLayer.features[this.id];
+    return linkedFeature;
+  }else{
+    return null;
+  }
 };

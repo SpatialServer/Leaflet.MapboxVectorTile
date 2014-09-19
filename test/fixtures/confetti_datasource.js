@@ -1,14 +1,9 @@
-/**
- * Created by Nicholas Hallahan <nhallahan@spatialdev.com>
- *       on 8/15/14.
- */
-
-var opts = {
-  url: "http://spatialserver.spatialdev.com/services/vector-tiles/gadm2014kenya/{z}/{x}/{y}.pbf",
+module.exports = {
+  url: "http://spatialserver.spatialdev.com/services/postgis/cicos_2014/geom/vector-tiles/{z}/{x}/{y}.pbf?fields=type,id",
   debug: true,
-  clickableLayers: ['gadm0', 'gadm1', 'gadm2', 'gadm3', 'gadm4', 'gadm5'],
+  clickableLayers: [''],
 
-  getIDForLayerFeature: function(feature) {
+  getIDForLayerFeature: function (feature) {
     return feature.properties.id;
   },
 
@@ -22,31 +17,24 @@ var opts = {
    * @param feature
    * @returns {boolean}
    */
-  filter: function(feature, context) {
-    if (feature.layer.name === 'gadm1_label' || feature.layer.name === 'gadm1') {
-      return true;
-    }
-
-    return false;
+  filter: function (feature, context) {
+    //return feature.properties.type != 'Mobile Money Agent';
+    return true;
   },
 
   /**
-   * When we want to link events between layers, like clicking on a label and a
-   * corresponding polygon freature, this will return the corresponding mapping
-   * between layers. This provides knowledge of which other feature a given feature
-   * is linked to.
+   * Specify which features should have a certain z index (integer).  Lower numbers will draw on 'the bottom'.
    *
-   * @param layerName  the layer we want to know the linked layer from
-   * @returns {string} returns corresponding linked layer
+   * @param feature - the PBFFeature that contains properties
    */
-  layerLink: function(layerName) {
-    if (layerName.indexOf('_label') > -1) {
-      return layerName.replace('_label','');
+  layerOrdering: function (feature) {
+    //This only needs to be done for each type, not necessarily for each feature. But we'll start here.
+    if (feature && feature.properties) {
+      feature.properties.zIndex =  5;
     }
-    return layerName + '_label';
   },
 
-  style: function(feature) {
+  style: function (feature) {
     var style = {};
     var selected = style.selected = {};
 
@@ -54,7 +42,7 @@ var opts = {
     switch (type) {
       case 1: //'Point'
         // unselected
-        style.color = '#ff0000';
+        style.color = '#3086AB';
         style.radius = 3;
         // selected
         selected.color = 'rgba(255,255,0,0.5)';
@@ -83,17 +71,6 @@ var opts = {
         };
     }
 
-    if (feature.layer.name === 'gadm1_label') {
-      style.staticLabel = function() {
-        var style = {
-          html: feature.properties.name,
-          iconSize: [125,30],
-          cssClass: 'label-icon-text'
-        };
-        return style;
-      };
-    }
-
     return style;
   }
-}
+};

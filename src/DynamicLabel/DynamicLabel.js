@@ -12,7 +12,7 @@ if (typeof require === 'function') {
 }
 
 /**
- * There should be one instance of Label per PBFSource.
+ * There should be one instance of Label per MVTSource.
  *
  * @param map
  * @param options
@@ -20,7 +20,7 @@ if (typeof require === 'function') {
  */
 function DynamicLabel(map, pbfSource, options) {
   this.map = map;
-  this.pbfSource = pbfSource;
+  this.mvtSource = pbfSource;
 
   // default options
   this.options = {
@@ -72,7 +72,7 @@ DynamicLabel.prototype.createFeature = function(pbfFeature, options) {
 DynamicLabel.prototype._determineActiveTiles = function() {
   var activeTiles = this.activeTiles = {};
   var bounds = this.map.getPixelBounds();
-  var tileSize = this.pbfSource.options.tileSize;
+  var tileSize = this.mvtSource.options.tileSize;
   var z = this.map.getZoom();
 
   var minX = Math.floor(bounds.min.x / tileSize);

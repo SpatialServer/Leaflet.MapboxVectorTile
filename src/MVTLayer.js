@@ -1,12 +1,11 @@
 /**
- * Created by Ryan Whitley on 9/8/14.
+ * Created by Ryan Whitley on 5/17/14.
  */
 /** Forked from https://gist.github.com/DGuidi/1716010 **/
+var MVTFeature = require('./MVTFeature');
+var Util = require('./MVTUtil');
 
-
-var Util = require('./PBFUtil');
-
-module.exports = L.TileLayer.PBFPointLayer = L.TileLayer.Canvas.extend({
+module.exports = L.TileLayer.Canvas.extend({
 
   options: {
     debug: false,
@@ -27,18 +26,17 @@ module.exports = L.TileLayer.PBFPointLayer = L.TileLayer.Canvas.extend({
     }
   },
 
-  initialize: function(pbfSource, options) {
+  initialize: function(mvtSource, options) {
     var self = this;
-    self.pbfSource = pbfSource;
+    self.mvtSource = mvtSource;
     L.Util.setOptions(this, options);
 
-    this.styleFor = options.styleFor;
+    this.style = options.style;
     this.name = options.name;
-
+    this._canvasIDToFeatures = {};
     this.visible = true;
     this.features = {};
     this.featuresWithLabels = [];
-    this.zIndexSortOrder = [];
   },
 
   drawTile: function(canvas, tilePoint, zoom) {
@@ -52,16 +50,27 @@ module.exports = L.TileLayer.PBFPointLayer = L.TileLayer.Canvas.extend({
 
     ctx.id = Util.getContextID(ctx);
 
+    if (!this._canvasIDToFeatures[ctx.id]) {
+      this._initializeFeaturesHash(ctx);
+    }
     if (!this.features) {
       this.features = {};
     }
 
   },
 
-  _draw: function(ctx) {
-    //Draw is handled by the parent PBFSource object
+  _initializeFeaturesHash: function(ctx){
+    this._canvasIDToFeatures[ctx.id] = {};
+    this._canvasIDToFeatures[ctx.id].features = [];
+    this._canvasIDToFeatures[ctx.id].canvas = ctx.canvas;
   },
-  getCanvas: function(parentCtx, vtl){
+
+  _draw: function(ctx) {
+    //Draw is handled by the parent MVTSource object
+  },
+  getCanvas: function(parentCtx){
+    //This gets called if a vector tile feature has already been parsed.
+    //We've already got the geom, just get on with the drawing.
     //Need a way to pluck a canvas element from this layer given the parent layer's id.
     //Wait for it to get loaded before proceeding.
     var tilePoint = parentCtx.tile;
@@ -69,7 +78,7 @@ module.exports = L.TileLayer.PBFPointLayer = L.TileLayer.Canvas.extend({
 
     if(ctx){
       parentCtx.canvas = ctx;
-      this.parseVectorTileLayer(vtl, parentCtx);
+      this.redrawTile(parentCtx.id);
       return;
     }
 
@@ -87,7 +96,7 @@ module.exports = L.TileLayer.PBFPointLayer = L.TileLayer.Canvas.extend({
         //When it finishes, do this.
         ctx = self._tiles[tilePoint.x + ":" + tilePoint.y];
         parentCtx.canvas = ctx;
-        self.parseVectorTileLayer(vtl, parentCtx);
+        self.redrawTile(parentCtx.id);
 
       }, //when done, go to next flow
       2000); //The Timeout milliseconds.  After this, give up and move on
@@ -98,62 +107,83 @@ module.exports = L.TileLayer.PBFPointLayer = L.TileLayer.Canvas.extend({
     var self = this;
     var tilePoint = ctx.tile;
 
-    //See if we can pluck the same tile from this local tile layer
+    //See if we can pluck the child tile from this PBF tile layer based on the master layer's tile id.
     ctx.canvas = self._tiles[tilePoint.x + ":" + tilePoint.y];
 
-    //Clear tile -- TODO: Add flag so this only happens when a layer is being turned back on after being hidden
-    if(ctx.canvas) ctx.canvas.width = ctx.canvas.width;
+    //Initialize this tile's feature storage hash, if it hasn't already been created.  Used for when filters are updated, and features are cleared to prepare for a fresh redraw.
+    if (!this._canvasIDToFeatures[ctx.id]) {
+      this._initializeFeaturesHash(ctx);
+    }
 
-    var features = this.features = vtl.parsedFeatures;
+    var features = vtl.parsedFeatures;
     for (var i = 0, len = features.length; i < len; i++) {
-      var vtf = features[i] //vector tile feature
-
-      if(i === 0){
-        // how much we divide the coordinate from the vector tile
-        this.divisor = vtf.extent / ctx.tileSize;
-        this.extent = vtf.extent;
-        this.tileSize = ctx.tileSize;
-      }
+      var vtf = features[i]; //vector tile feature
+      vtf.layer = vtl;
 
       /**
        * Apply filter on feature if there is one. Defined in the options object
-       * of TileLayer.PBFSource.js
+       * of TileLayer.MVTSource.js
        */
       var filter = self.options.filter;
       if (typeof filter === 'function') {
         if ( filter(vtf, ctx) === false ) continue;
       }
 
+      var getIDForLayerFeature;
+      if (typeof self.options.getIDForLayerFeature === 'function') {
+        getIDForLayerFeature = self.options.getIDForLayerFeature;
+      } else {
+        getIDForLayerFeature = Util.getIDForLayerFeature;
+      }
+      var uniqueID = self.options.getIDForLayerFeature(vtf) || i;
+      var mvtFeature = self.features[uniqueID];
+
+      /**
+       * Use layerOrdering function to apply a zIndex property to each vtf.  This is defined in
+       * TileLayer.MVTSource.js.  Used below to sort features.npm
+       */
       var layerOrdering = self.options.layerOrdering;
       if (typeof layerOrdering === 'function') {
         layerOrdering(vtf, ctx); //Applies a custom property to the feature, which is used after we're thru iterating to sort
       }
+
+      //Create a new MVTFeature if one doesn't already exist for this feature.
+      if (!mvtFeature) {
+        //Get a style for the feature - set it just once for each new MVTFeature
+        var style = self.style(vtf);
+
+        //create a new feature
+        self.features[uniqueID] = mvtFeature = new MVTFeature(self, vtf, ctx, uniqueID, style, this._map);
+        if (typeof style.dynamicLabel === 'function') {
+          self.featuresWithLabels.push(mvtFeature);
+        }
+      } else {
+        //Add the new part to the existing feature
+        mvtFeature.addTileFeature(vtf, ctx);
+      }
+
+      //Associate & Save this feature with this tile for later
+      if(ctx && ctx.id) self._canvasIDToFeatures[ctx.id]['features'].push(mvtFeature);
+
     }
 
-    //If a z-order function is specified, wait unitl all features have been iterated over until drawing (here)
     /**
      * Apply sorting (zIndex) on feature if there is a function defined in the options object
-     * of TileLayer.PBFSource.js
+     * of TileLayer.MVTSource.js
      */
     var layerOrdering = self.options.layerOrdering;
     if (layerOrdering) {
       //We've assigned the custom zIndex property when iterating above.  Now just sort.
-      self.zIndexSortOrder = Object.keys(this.features).sort(function(a, b) {
-        return -(self.features[b].properties.zIndex - self.features[a].properties.zIndex)
+      self._canvasIDToFeatures[ctx.id].features = self._canvasIDToFeatures[ctx.id].features.sort(function(a, b) {
+        return -(b.properties.zIndex - a.properties.zIndex)
       });
     }
 
-    self.redrawTile(ctx.id, ctx.zoom, ctx);
-
-    for (var j = 0, len = self.featuresWithLabels.length; j < len; j++) {
-      var feat = self.featuresWithLabels[j];
-      debug.feat = feat;
-
-    }
+    self.redrawTile(ctx.id);
   },
 
   // NOTE: a placeholder for a function that, given a feature, returns a style object used to render the feature itself
-  styleFor: function(feature) {
+  style: function(feature) {
     // override with your code
   },
 
@@ -167,10 +197,10 @@ module.exports = L.TileLayer.PBFPointLayer = L.TileLayer.Canvas.extend({
     var y = evt.layerPoint.y - canvas._leaflet_pos.y;
 
     var tilePoint = {x: x, y: y};
-    var features = this._canvasIDToFeaturesForZoom[evt.tileID].features; //Switch this.  Not storing this for point.
+    var features = this._canvasIDToFeatures[evt.tileID].features;
     for (var i = 0; i < features.length; i++) {
       var feature = features[i];
-      var paths = feature.getPathsForTile(evt.tileID, this._map.getZoom());
+      var paths = feature.getPathsForTile(evt.tileID);
       for (var j = 0; j < paths.length; j++) {
         if (this._isPointInPoly(tilePoint, paths[j])) {
           if (feature.toggleEnabled) {
@@ -188,73 +218,54 @@ module.exports = L.TileLayer.PBFPointLayer = L.TileLayer.Canvas.extend({
     cb(evt);
   },
 
-  clearTile: function(ctx) {
-    ctx.canvas.width = ctx.canvas.width;
+  clearTile: function(id) {
+    //id is the entire zoom:x:y.  we just want x:y.
+    var ca = id.split(":");
+    var canvasId = ca[1] + ":" + ca[2];
+    if (typeof this._tiles[canvasId] === 'undefined') {
+      return;
+    }
+    var canvas = this._tiles[canvasId];
+
+//  old school way of clearing a canvas
+//    canvas.width = canvas.width;
+
+//  explicit way of clearing a canvas (better perf)
+    var context = canvas.getContext('2d');
+    context.clearRect(0, 0, canvas.width, canvas.height);
   },
 
-  redrawTile: function(canvasID, zoom, ctx) {
-    //Get the features for this tile, and redraw them.
-    var features = this.features;
-
-    //if z-index function is specified, sort the features so they draw in the correct order, bottom points draw first.
-    if(this.zIndexSortOrder && this.zIndexSortOrder.length > 0){
-      //Loop in specific order
-      for (var i = 0; i < this.zIndexSortOrder.length; i++) {
-        var id = this.zIndexSortOrder[i];
-        var feature = features[id];
-        if(feature){
-          this.drawPoint(ctx, feature.coordinates, this.styleFor(feature));
-        }
-      }
-    }
-    else{
-      //Just loop already
-      for (var i = 0; i < features.length; i++) {
-        var feature = features[i];
-        this.drawPoint(ctx, feature.coordinates, this.styleFor(feature));
-      }
-    }
-
-    //Remove features
+  clearLayerFeatureHash: function(){
+    this._canvasIDToFeatures = {}; //Get rid of all saved features
     this.features = {};
   },
 
+  redrawTile: function(canvasID) {
+    //Get the features for this tile, and redraw them.
+    var features = this._canvasIDToFeatures[canvasID].features;
+
+    for (var i = 0; i < features.length; i++) {
+      var feature = features[i];
+      feature.draw(canvasID);
+    }
+  },
+
+  _resetCanvasIDToFeatures: function(canvasID, canvas) {
+
+    this._canvasIDToFeatures[canvasID] = {};
+    this._canvasIDToFeatures[canvasID].features = [];
+    this._canvasIDToFeatures[canvasID].canvas = canvas;
+
+  },
+
   linkedLayer: function() {
-    var linkName = this.pbfSource.layerLink(this.name);
-    return this.pbfSource.layers[linkName];
-  },
-
-  drawPoint: function(ctx, coordsArray, style) {
-    if (!style) return;
-
-    var radius = 1;
-    if (typeof style.radius === 'function') {
-      radius = style.radius(ctx.zoom); //Allows for scale dependent rednering
+    if(this.mvtSource.layerLink) {
+      var linkName = this.mvtSource.layerLink(this.name);
+      return this.mvtSource.layers[linkName];
     }
-    else {
-      radius = style.radius;
+    else{
+      return null;
     }
-
-    var p = this._tilePoint(coordsArray[0][0]);
-    var c = ctx.canvas;
-    var g = c.getContext('2d');
-    g.beginPath();
-    g.fillStyle = style.color;
-    g.arc(p.x, p.y, radius, 0, Math.PI * 2);
-    g.closePath();
-    g.fill();
-    g.restore();
-  },
-  /**
-   * Takes a coordinate from a vector tile and turns it into a Leaflet Point.
-   *
-   * @param ctx
-   * @param coords
-   * @returns {eGeomType.Point}
-   * @private
-   */
-  _tilePoint: function(coords) {
-    return new L.Point(coords.x / this.divisor, coords.y / this.divisor);
   }
 
 });

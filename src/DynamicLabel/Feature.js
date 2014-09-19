@@ -6,8 +6,8 @@
 function Feature(label, pbfFeature, options) {
   this.dynamicLabel = label;
   this.pbfFeature = pbfFeature;
-  this.pbfLayer = pbfFeature.pbfLayer;
-  this.pbfSource = pbfFeature.pbfLayer.pbfSource;
+  this.mvtLayer = pbfFeature.mvtLayer;
+  this.mvtSource = pbfFeature.mvtLayer.mvtSource;
   this.map = label.map;
   this.activeTiles = label.activeTiles;
   this.marker = null;
@@ -109,7 +109,7 @@ function positionMarker(feature, pt) {
 
 /**
  * This is the default style function. This is overridden
- * if there is a style.dynamicLabel function in PBFFeature.
+ * if there is a style.dynamicLabel function in MVTFeature.
  */
 Feature.prototype._styleFn = function() {
 
