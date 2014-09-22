@@ -72,9 +72,10 @@ var mvtSource = new L.TileLayer.MVTSource({
     if (feature.layer.name === 'gaul_2014_adm1_label') {
       style.staticLabel = function() {
         var style = {
-          html: feature.properties.name,
-          iconSize: [125,30],
-          cssClass: 'label-icon-text'
+          html: feature.properties.id,
+          iconSize: [33,33],
+          cssClass: 'label-icon-number',
+          cssSelectedClass: 'label-icon-number-selected'
         };
         return style;
       };

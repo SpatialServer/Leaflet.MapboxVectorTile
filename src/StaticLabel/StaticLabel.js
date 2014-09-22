@@ -44,14 +44,14 @@ StaticLabel.prototype.toggle = function() {
 
 StaticLabel.prototype.select = function() {
   this.selected = true;
-  this.marker._icon.classList.add('label-icon-text-selected');
+  this.marker._icon.classList.add(this.style.cssSelectedClass || 'label-icon-text-selected');
   var linkedFeature = this.pbfFeature.linkedFeature();
   if (!linkedFeature.selected) linkedFeature.select();
 };
 
 StaticLabel.prototype.deselect = function() {
   this.selected = false;
-  this.marker._icon.classList.remove('label-icon-text-selected');
+  this.marker._icon.classList.remove(this.style.cssSelectedClass || 'label-icon-text-selected');
   var linkedFeature = this.pbfFeature.linkedFeature();
   if (linkedFeature.selected) linkedFeature.deselect();
 };
