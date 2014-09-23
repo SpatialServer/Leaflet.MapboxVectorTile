@@ -16,31 +16,42 @@ function StaticLabel(mvtFeature, ctx, latLng, style) {
   if (typeof style.ajaxSource === 'function') {
     var ajaxEndpoint = style.ajaxSource(mvtFeature);
     Util.getJSON(ajaxEndpoint, function(error, response, body) {
-      console.log('afaf');
+      if (error) {
+        throw ['StaticLabel AJAX Error', error];
+        init(self, mvtFeature, ctx, latLng, style, null);
+      } else {
+        init(self, mvtFeature, ctx, latLng, style, response);
+      }
+
     });
   } else {
-    var sty = this.style = style.staticLabel(mvtFeature);
+    init(self, mvtFeature, ctx, latLng, style, null);
   }
 
-  var icon = this.icon = L.divIcon({
+}
+
+function init(self, mvtFeature, ctx, latLng, style, ajaxData) {
+  var sty = self.style = style.staticLabel(mvtFeature, ajaxData);
+  var icon = self.icon = L.divIcon({
     className: sty.cssClass || 'label-icon-text',
-    html: sty.html || 'No Label',
+    html: sty.html,
     iconSize: sty.iconSize || [50,50]
   });
 
-  this.marker = L.marker(latLng, {icon: icon}).addTo(this.map);
+  self.marker = L.marker(latLng, {icon: icon}).addTo(self.map);
 
-  this.marker.on('click', function(e) {
+  self.marker.on('click', function(e) {
     self.toggle();
   });
 
-  this.map.on('zoomend', function(e) {
+  self.map.on('zoomend', function(e) {
     var newZoom = e.target.getZoom();
     if (self.zoom !== newZoom) {
       self.map.removeLayer(self.marker);
     }
   });
 }
+
 
 StaticLabel.prototype.toggle = function() {
   if (this.selected) {

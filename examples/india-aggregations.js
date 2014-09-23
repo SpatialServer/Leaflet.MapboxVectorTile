@@ -8,7 +8,7 @@ L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery
 
 
 var mvtSource = new L.TileLayer.MVTSource({
-  url: "https://a.tiles.mapbox.com/v4/nicholashallahan.43cc7605/{z}/{x}/{y}.vector.pbf?access_token=pk.eyJ1IjoibmljaG9sYXNoYWxsYWhhbiIsImEiOiJ5YWxaRUY0In0.qLtNgKJKXvhm7j5u6ZvDDw",
+  url: "http://spatialserver.spatialdev.com/services/vector-tiles/gaul_fsp_india/{z}/{x}/{y}.pbf",
   debug: true,
   clickableLayers: ['gaul_2014_adm1'],
   getIDForLayerFeature: function(feature) {
@@ -72,12 +72,12 @@ var mvtSource = new L.TileLayer.MVTSource({
     if (feature.layer.name === 'gaul_2014_adm1_label') {
       style.ajaxSource = function(mvtFeature) {
         var id = mvtFeature.id;
-        return 'http://spatialserver.spatialdev.com/fsp/2014/fsp/aggregations-no-name/' + id + '.json';
+        return 'http://localhost:8888/fsp/2014/fsp/aggregations-no-name/' + id + '.json';
       };
 
       style.staticLabel = function(mvtFeature, ajaxData) {
         var style = {
-          html: mvtFeature.properties.id,
+          html: ajaxData.total_count,
           iconSize: [33,33],
           cssClass: 'label-icon-number',
           cssSelectedClass: 'label-icon-number-selected'
