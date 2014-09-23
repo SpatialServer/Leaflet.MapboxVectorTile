@@ -70,9 +70,14 @@ var mvtSource = new L.TileLayer.MVTSource({
     }
 
     if (feature.layer.name === 'gaul_2014_adm1_label') {
-      style.staticLabel = function() {
+      style.ajaxSource = function(mvtFeature) {
+        var id = mvtFeature.id;
+        return 'http://spatialserver.spatialdev.com/fsp/2014/fsp/aggregations-no-name/' + id + '.json';
+      };
+
+      style.staticLabel = function(mvtFeature, ajaxData) {
         var style = {
-          html: feature.properties.id,
+          html: mvtFeature.properties.id,
           iconSize: [33,33],
           cssClass: 'label-icon-number',
           cssSelectedClass: 'label-icon-number-selected'

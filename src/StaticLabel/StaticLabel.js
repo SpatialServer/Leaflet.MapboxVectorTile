@@ -2,17 +2,25 @@
  * Created by Nicholas Hallahan <nhallahan@spatialdev.com>
  *       on 7/31/14.
  */
-
+var Util = require('../MVTUtil');
 module.exports = StaticLabel;
 
-function StaticLabel(pbfFeature, ctx, latLng, style) {
+function StaticLabel(mvtFeature, ctx, latLng, style) {
   var self = this;
-  this.pbfFeature = pbfFeature;
-  this.map = pbfFeature.map;
+  this.mvtFeature = mvtFeature;
+  this.map = mvtFeature.map;
   this.zoom = ctx.zoom;
   this.latLng = latLng;
-  var sty = this.style = style.staticLabel();
   this.selected = false;
+
+  if (typeof style.ajaxSource === 'function') {
+    var ajaxEndpoint = style.ajaxSource(mvtFeature);
+    Util.getJSON(ajaxEndpoint, function(error, response, body) {
+      console.log('afaf');
+    });
+  } else {
+    var sty = this.style = style.staticLabel(mvtFeature);
+  }
 
   var icon = this.icon = L.divIcon({
     className: sty.cssClass || 'label-icon-text',
@@ -45,13 +53,13 @@ StaticLabel.prototype.toggle = function() {
 StaticLabel.prototype.select = function() {
   this.selected = true;
   this.marker._icon.classList.add(this.style.cssSelectedClass || 'label-icon-text-selected');
-  var linkedFeature = this.pbfFeature.linkedFeature();
+  var linkedFeature = this.mvtFeature.linkedFeature();
   if (!linkedFeature.selected) linkedFeature.select();
 };
 
 StaticLabel.prototype.deselect = function() {
   this.selected = false;
   this.marker._icon.classList.remove(this.style.cssSelectedClass || 'label-icon-text-selected');
-  var linkedFeature = this.pbfFeature.linkedFeature();
+  var linkedFeature = this.mvtFeature.linkedFeature();
   if (linkedFeature.selected) linkedFeature.deselect();
 };
