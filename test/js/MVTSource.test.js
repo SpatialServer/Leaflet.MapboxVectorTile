@@ -27,7 +27,7 @@ test('create a map, loading a tile', function(t) {
   t.plan(1);
   setTimeout(function() {
     t.ok(mvtSource.loadedTiles['6:38:32'], 'tile 6:38:32 loaded');
-  }, 1000);
+  }, 2000);
 });
 
 test('basic map, zoom in, zoom out, check for drawn tiles', function(t) {
@@ -45,8 +45,9 @@ test('basic map, zoom in, zoom out, check for drawn tiles', function(t) {
 
   t.plan(1);
   setTimeout(function() {
+    console.log("# Tiles: " + Object.keys(mvtSource.loadedTiles).length);
     t.ok(mvtSource.loadedTiles['6:38:32'], 'tile 6:38:32 loaded');
-  }, 1000);
+  }, 2000);
 });
 
 test('create a confetti map, loading a confetti tile', function(t) {
@@ -65,5 +66,5 @@ test('create a confetti map, loading a confetti tile', function(t) {
   setTimeout(function() {
     console.log("# Tiles: " + Object.keys(mvtSource.loadedTiles).length);
     t.ok(mvtSource.loadedTiles['14:11875:6922'], 'tile 14:11875:6922 loaded');
-  }, 1000);
+  }, 2000);
 });

@@ -49,6 +49,10 @@ MVTFeature.prototype.draw = function(canvasID) {
   var vtf = tileInfo.vtf;
   var ctx = tileInfo.ctx;
 
+  //Get the actual canvas from the parent layer's _tiles object.
+  var xy = canvasID.split(":").slice(1, 3).join(":");
+  ctx.canvas = this.mvtLayer._tiles[xy];
+
   if (ctx.canvas._layer.name !== this.mvtLayer.name) {
     console.error('ctx.canvas._layer.name !== this.mvtLayer.name FINDING CORRECT CANVAS....');
     ctx.canvas = this.mvtLayer._canvasIDToFeatures[canvasID].canvas;
