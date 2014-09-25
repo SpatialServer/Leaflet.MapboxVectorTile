@@ -12,6 +12,8 @@ A Leaflet Plugin that renders Mapbox Vector Tiles on HTML5 Canvas.
 
 [Statically Placed Labels](http://spatialserver.github.io/Leaflet.MapboxVectorTile/examples/static-label.html)
 
+[Confetti (700k Points)](http://spatialserver.github.io/Leaflet.MapboxVectorTile/examples/confetti.html)
+
 ## Getting Started
 
 Install the dependencies:
