@@ -1,15 +1,4 @@
-var debug = {};
-
-var map = L.map('map').setView([25.40,79.409], 6); // Northern India
-
-L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-  maxZoom: 18
-}).addTo(map);
-
-
-var mvtSource = new L.TileLayer.MVTSource({
-  // alternative mapbox web service source, gives lots of 404 errors as mapbox likes to do...
-//  url: "https://a.tiles.mapbox.com/v4/nicholashallahan.43cc7605/{z}/{x}/{y}.vector.pbf?access_token=pk.eyJ1IjoibmljaG9sYXNoYWxsYWhhbiIsImEiOiJ5YWxaRUY0In0.qLtNgKJKXvhm7j5u6ZvDDw",
+module.exports = {
   url: "http://spatialserver.spatialdev.com/services/vector-tiles/gaul_fsp_india/{z}/{x}/{y}.pbf",
   debug: true,
   clickableLayers: ['gaul_2014_adm1'],
@@ -101,8 +90,4 @@ var mvtSource = new L.TileLayer.MVTSource({
     return layerName + '_label';
   }
 
-});
-debug.mvtSource = mvtSource;
-
-//Add layer
-map.addLayer(mvtSource);
+};

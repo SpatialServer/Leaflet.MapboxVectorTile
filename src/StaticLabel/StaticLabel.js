@@ -74,3 +74,7 @@ StaticLabel.prototype.deselect = function() {
   var linkedFeature = this.mvtFeature.linkedFeature();
   if (linkedFeature.selected) linkedFeature.deselect();
 };
+
+StaticLabel.prototype.remove = function() {
+  this.map.removeLayer(this.marker);
+};

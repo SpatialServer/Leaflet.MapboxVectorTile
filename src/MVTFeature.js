@@ -38,7 +38,7 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
   this.addTileFeature(vtf, ctx);
 
   if (typeof style.dynamicLabel === 'function') {
-    this.featureLabel = this.mvtSource.dynamicLabel.createFeature(this);
+    this.dynamicLabel = this.mvtSource.dynamicLabel.createFeature(this);
   }
 }
 
@@ -197,9 +197,14 @@ MVTFeature.prototype._drawStaticLabel = function(ctx, coordsArray, style) {
   var latLng = this.map.unproject(mercPt); // merc pt to latlng
 
   this.staticLabel = new StaticLabel(this, ctx, latLng, style);
+  this.mvtLayer.featureWithLabelAdded(this);
 };
 
-
+MVTFeature.prototype.removeLabel = function() {
+  if (!this.staticLabel) return;
+  this.staticLabel.remove();
+  this.staticLabel = null;
+};
 
 /**
  * Projects a vector tile point to the Spherical Mercator pixel space for a given zoom level.
@@ -263,7 +268,7 @@ MVTFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
   var projCoords = [];
   var tile = this.tiles[ctx.id];
 
-  var featureLabel = this.featureLabel;
+  var featureLabel = this.dynamicLabel;
   if (featureLabel) {
     featureLabel.addTilePolys(ctx, coordsArray);
   }

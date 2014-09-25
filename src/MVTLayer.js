@@ -39,6 +39,15 @@ module.exports = L.TileLayer.Canvas.extend({
     this.featuresWithLabels = [];
   },
 
+  onAdd: function(map) {
+    var self = this;
+    self.map = map;
+    L.TileLayer.Canvas.prototype.onAdd.call(this, map);
+    map.on('layerremove', function(e) {
+      removeLabels(self);
+    });
+  },
+
   drawTile: function(canvas, tilePoint, zoom) {
 
     var ctx = {
@@ -266,9 +275,24 @@ module.exports = L.TileLayer.Canvas.extend({
     else{
       return null;
     }
+  },
+
+  featureWithLabelAdded: function(feature) {
+    this.featuresWithLabels.push(feature);
   }
 
 });
+
+
+function removeLabels(self) {
+  var features = self.featuresWithLabels;
+  for (var i = 0, len = features.length; i < len; i++) {
+    var feat = features[i];
+    feat.removeLabel();
+  }
+  self.featuresWithLabels = [];
+}
+
 
 /**
  * See https://github.com/ariya/phantomjs/blob/master/examples/waitfor.js
