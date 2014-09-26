@@ -82,11 +82,37 @@ test('ensure labels are removed when mvtSource is removed from map', function(t)
   t.plan(2);
   setTimeout(function() {
     var layersWithLabels = Object.keys(map._layers).length;
-    t.equal(layersWithLabels, 10, 'should be 10 layers with labels');
+    t.equal(layersWithLabels, 10, 'should be 10 layers on map');
     setTimeout(function() {
       map.removeLayer(mvtSource);
       var layersWithLabels = Object.keys(map._layers).length;
       t.equal(layersWithLabels, 1, 'should be 1 base map layer with no mvt source and no labels');
     }, 500);
+  }, 700);
+});
+
+test('ensure no repeats of features for featuresWithLabels array', function(t) {
+  var opts = require('../fixtures/indiaStaticLabel.js');
+  document.body.innerHTML += '<div id="map"></div>';
+  var map = L.map('map').setView([25.40,79.409], 4); // Northern India
+  L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 18
+  }).addTo(map);
+  var mvtSource = new L.TileLayer.MVTSource(opts);
+  map.addLayer(mvtSource);
+
+  t.plan(1);
+  var hash = {};
+  setTimeout(function() {
+    var featuresWithLabels = mvtSource.layers.gaul_2014_adm1_label.featuresWithLabels;
+    for (var idx = 0, len = featuresWithLabels.length; idx < len; idx++) {
+      var feat = featuresWithLabels[idx];
+      if (hash[feat.id]) {
+        t.fail('there is more than 1 feature with id ' + feat.id + ' also known as ' + feat.staticLabel.icon.options.html);
+      }
+      hash[feat.id] = true;
+//      console.log(feat.staticLabel.icon.options.html);
+    }
+    t.pass();
   }, 700);
 });
