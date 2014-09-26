@@ -58,11 +58,6 @@ MVTFeature.prototype.draw = function(canvasID) {
   var xy = canvasID.split(":").slice(1, 3).join(":");
   ctx.canvas = this.mvtLayer._tiles[xy];
 
-  if (ctx.canvas._layer.name !== this.mvtLayer.name) {
-    console.error('ctx.canvas._layer.name !== this.mvtLayer.name FINDING CORRECT CANVAS....');
-    ctx.canvas = this.mvtLayer._canvasIDToFeatures[canvasID].canvas;
-  }
-
   if (this.selected) {
     var style = this.style.selected || this.style;
   } else {
