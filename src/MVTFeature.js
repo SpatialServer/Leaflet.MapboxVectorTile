@@ -173,21 +173,92 @@ MVTFeature.prototype._drawPoint = function(ctx, coordsArray, style) {
 
   var p = this._tilePoint(coordsArray[0][0]);
   var c = ctx.canvas;
-  var g = c.getContext('2d');
-  g.beginPath();
-  g.fillStyle = style.color;
-  g.arc(p.x, p.y, radius, 0, Math.PI * 2);
-  g.closePath();
-  g.fill();
+  var ctx2d = c.getContext('2d');
+  ctx2d.beginPath();
+  ctx2d.fillStyle = style.color;
+  ctx2d.arc(p.x, p.y, radius, 0, Math.PI * 2);
+  ctx2d.closePath();
+  ctx2d.fill();
 
   if(style.lineWidth && style.strokeStyle){
-    g.lineWidth = style.lineWidth;
-    g.strokeStyle = style.strokeStyle;
-    g.stroke();
+    ctx2d.lineWidth = style.lineWidth;
+    ctx2d.strokeStyle = style.strokeStyle;
+    ctx2d.stroke();
   }
 
-  g.restore();
+  ctx2d.restore();
   tile.paths.push([p]);
+};
+
+MVTFeature.prototype._drawLineString = function(ctx, coordsArray, style) {
+  if (!style) return;
+
+  var ctx2d = ctx.canvas.getContext('2d');
+  ctx2d.strokeStyle = style.color;
+  ctx2d.lineWidth = style.size;
+  ctx2d.beginPath();
+
+  var projCoords = [];
+  var tile = this.tiles[ctx.id];
+
+  for (var gidx in coordsArray) {
+    var coords = coordsArray[gidx];
+
+    for (i = 0; i < coords.length; i++) {
+      var method = (i === 0 ? 'move' : 'line') + 'To';
+      var proj = this._tilePoint(coords[i]);
+      projCoords.push(proj);
+      ctx2d[method](proj.x, proj.y);
+    }
+  }
+
+  ctx2d.stroke();
+  ctx2d.restore();
+
+  tile.paths.push(projCoords);
+};
+
+MVTFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
+  if (!style) return;
+  if (!ctx.canvas) return;
+
+  var ctx2d = ctx.canvas.getContext('2d');
+  var outline = style.outline;
+  ctx2d.fillStyle = style.color;
+  if (outline) {
+    ctx2d.strokeStyle = outline.color;
+    ctx2d.lineWidth = outline.size;
+  }
+  ctx2d.beginPath();
+
+  var projCoords = [];
+  var tile = this.tiles[ctx.id];
+
+  var featureLabel = this.dynamicLabel;
+  if (featureLabel) {
+    featureLabel.addTilePolys(ctx, coordsArray);
+  }
+
+  for (var gidx = 0, len = coordsArray.length; gidx < len; gidx++) {
+    var coords = coordsArray[gidx];
+
+    for (var i = 0; i < coords.length; i++) {
+      var coord = coords[i];
+      var method = (i === 0 ? 'move' : 'line') + 'To';
+      var proj = this._tilePoint(coords[i]);
+      projCoords.push(proj);
+      ctx2d[method](proj.x, proj.y);
+    }
+  }
+
+  ctx2d.closePath();
+  ctx2d.fill();
+  if (outline) {
+    ctx2d.stroke();
+  }
+
+  tile.paths.push(projCoords);
+
 };
 
 MVTFeature.prototype._drawStaticLabel = function(ctx, coordsArray, style) {
@@ -226,77 +297,6 @@ MVTFeature.prototype._project = function(vecPt, tileX, tileY, extent, tileSize) 
     x: Math.floor(vecPt.x + xOffset),
     y: Math.floor(vecPt.y + yOffset)
   };
-};
-
-MVTFeature.prototype._drawLineString = function(ctx, coordsArray, style) {
-  if (!style) return;
-
-  var g = ctx.canvas.getContext('2d');
-  g.strokeStyle = style.color;
-  g.lineWidth = style.size;
-  g.beginPath();
-
-  var projCoords = [];
-  var tile = this.tiles[ctx.id];
-
-  for (var gidx in coordsArray) {
-    var coords = coordsArray[gidx];
-
-    for (i = 0; i < coords.length; i++) {
-      var method = (i === 0 ? 'move' : 'line') + 'To';
-      var proj = this._tilePoint(coords[i]);
-      projCoords.push(proj);
-      g[method](proj.x, proj.y);
-    }
-  }
-
-  g.stroke();
-  g.restore();
-
-  tile.paths.push(projCoords);
-};
-
-MVTFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
-  if (!style) return;
-  if (!ctx.canvas) return;
-
-  var g = ctx.canvas.getContext('2d');
-  var outline = style.outline;
-  g.fillStyle = style.color;
-  if (outline) {
-    g.strokeStyle = outline.color;
-    g.lineWidth = outline.size;
-  }
-  g.beginPath();
-
-  var projCoords = [];
-  var tile = this.tiles[ctx.id];
-
-  var featureLabel = this.dynamicLabel;
-  if (featureLabel) {
-    featureLabel.addTilePolys(ctx, coordsArray);
-  }
-
-  for (var gidx = 0, len = coordsArray.length; gidx < len; gidx++) {
-    var coords = coordsArray[gidx];
-
-    for (var i = 0; i < coords.length; i++) {
-      var coord = coords[i];
-      var method = (i === 0 ? 'move' : 'line') + 'To';
-      var proj = this._tilePoint(coords[i]);
-      projCoords.push(proj);
-      g[method](proj.x, proj.y);
-    }
-  }
-
-  g.closePath();
-  g.fill();
-  if (outline) {
-    g.stroke();
-  }
-
-  tile.paths.push(projCoords);
-
 };
 
 /**
