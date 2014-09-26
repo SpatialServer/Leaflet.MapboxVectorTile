@@ -99,6 +99,8 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
       }
     });
 
+    self.addChildLayers(map);
+
     if (typeof DynamicLabel === 'function' ) {
       this.dynamicLabel = new DynamicLabel(map, this, {});
     }
@@ -293,6 +295,16 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     for (var key in this.layers) {
       var layer = this.layers[key];
       map.removeLayer(layer);
+    }
+  },
+
+  addChildLayers: function(map) {
+    for (var key in this.layers) {
+      var layer = this.layers[key];
+      // layer is set to visible and is not already on map
+      if (layer.visible && !layer._map) {
+        map.addLayer(layer);
+      }
     }
   },
 
