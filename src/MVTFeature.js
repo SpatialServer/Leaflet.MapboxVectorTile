@@ -63,7 +63,7 @@ MVTFeature.prototype.draw = function(canvasID) {
   switch (vtf.type) {
     case 1: //Point
       this._drawPoint(ctx, vtf.coordinates, style);
-      if (typeof this.style.staticLabel === 'function') {
+      if (!this.staticLabel && typeof this.style.staticLabel === 'function') {
         this._drawStaticLabel(ctx, vtf.coordinates, style);
       }
       break;

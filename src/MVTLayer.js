@@ -44,7 +44,10 @@ module.exports = L.TileLayer.Canvas.extend({
     self.map = map;
     L.TileLayer.Canvas.prototype.onAdd.call(this, map);
     map.on('layerremove', function(e) {
-      removeLabels(self);
+      // we only want to do stuff when the layerremove event is on this layer
+      if (e.layer._leaflet_id === self._leaflet_id) {
+        removeLabels(self);
+      }
     });
   },
 
