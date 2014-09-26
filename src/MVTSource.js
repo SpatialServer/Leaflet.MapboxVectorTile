@@ -80,6 +80,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
     this._tilesToProcess = 0; //store the max number of tiles to be loaded.  Later, we can use this count to count down PBF loading.
 
+    this._onClickSet = false;
   },
 
   onAdd: function(map) {
@@ -87,9 +88,14 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     self.map = map;
     L.TileLayer.Canvas.prototype.onAdd.call(this, map);
 
-    map.on('click', function(e) {
-      self.onClick(e);
-    });
+    // if this layer gets readded to the map, the map actually still has the event handler
+    if (!self._onClickSet) {
+      map.on('click', function(e) {
+        self.onClick(e);
+      });
+      self._onClickSet = true;
+    }
+
 
     map.on("layerremove", function(e) {
       // check to see if the layer removed is this one
