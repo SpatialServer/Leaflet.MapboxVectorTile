@@ -15,7 +15,7 @@ function StaticLabel(mvtFeature, ctx, latLng, style) {
 
   if (mvtFeature.linkedFeature) {
     var linkedFeature = mvtFeature.linkedFeature();
-    if (linkedFeature.selected) {
+    if (linkedFeature && linkedFeature.selected) {
       self.selected = true;
     }
   }
