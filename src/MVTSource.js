@@ -91,11 +91,11 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
       self.onClick(e);
     });
 
-    map.on("layerremove", function(removed) {
-      //This is the layer that was removed.
-      //If it is a TileLayer.MVTSource, then call a method to actually remove the children, too.
-      if (removed.layer.removeChildLayers) {
-        removed.layer.removeChildLayers(map);
+    map.on("layerremove", function(e) {
+      // check to see if the layer removed is this one
+      // call a method to remove the child layers (the ones that actually have something drawn on them).
+      if (e.layer._leaflet_id === self._leaflet_id && e.layer.removeChildLayers) {
+        e.layer.removeChildLayers(map);
       }
     });
 
