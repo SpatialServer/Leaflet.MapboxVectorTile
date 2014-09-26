@@ -271,7 +271,7 @@ module.exports = L.TileLayer.Canvas.extend({
     }
 
     // drawing the selected features last
-    for (var j = 0, len = selectedFeatures.length; j < len; j++) {
+    for (var j = 0, len2 = selectedFeatures.length; j < len2; j++) {
       var selFeat = selectedFeatures[j];
       selFeat.draw(canvasID);
     }

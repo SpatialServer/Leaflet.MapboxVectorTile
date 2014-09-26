@@ -13,6 +13,13 @@ function StaticLabel(mvtFeature, ctx, latLng, style) {
   this.latLng = latLng;
   this.selected = false;
 
+  if (mvtFeature.linkedFeature) {
+    var linkedFeature = mvtFeature.linkedFeature();
+    if (linkedFeature.selected) {
+      self.selected = true;
+    }
+  }
+
   if (typeof style.ajaxSource === 'function') {
     var ajaxEndpoint = style.ajaxSource(mvtFeature);
     Util.getJSON(ajaxEndpoint, function(error, response, body) {
@@ -39,6 +46,10 @@ function init(self, mvtFeature, ctx, latLng, style, ajaxData) {
   });
 
   self.marker = L.marker(latLng, {icon: icon}).addTo(self.map);
+
+  if (self.selected) {
+    self.marker._icon.classList.add(self.style.cssSelectedClass || 'label-icon-text-selected');
+  }
 
   self.marker.on('click', function(e) {
     self.toggle();
