@@ -235,6 +235,7 @@ module.exports = L.TileLayer.Canvas.extend({
     var ca = id.split(":");
     var canvasId = ca[1] + ":" + ca[2];
     if (typeof this._tiles[canvasId] === 'undefined') {
+      console.error("typeof this._tiles[canvasId] === 'undefined'");
       return;
     }
     var canvas = this._tiles[canvasId];
@@ -256,9 +257,23 @@ module.exports = L.TileLayer.Canvas.extend({
     //Get the features for this tile, and redraw them.
     var features = this._canvasIDToFeatures[canvasID].features;
 
+    // we want to skip drawing the selected features and draw them last
+    var selectedFeatures = [];
+
+    // drawing all of the non-selected features
     for (var i = 0; i < features.length; i++) {
       var feature = features[i];
-      feature.draw(canvasID);
+      if (feature.selected) {
+        selectedFeatures.push(feature);
+      } else {
+        feature.draw(canvasID);
+      }
+    }
+
+    // drawing the selected features last
+    for (var j = 0, len = selectedFeatures.length; j < len; j++) {
+      var selFeat = selectedFeatures[j];
+      selFeat.draw(canvasID);
     }
   },
 
