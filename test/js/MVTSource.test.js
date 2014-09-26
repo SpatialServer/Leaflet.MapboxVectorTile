@@ -25,9 +25,9 @@ test('create a map, loading a tile', function(t) {
   map.addLayer(mvtSource);
 
   t.plan(1);
-  setTimeout(function() {
+  setTimeout(function(mvtSource) {
     t.ok(mvtSource.loadedTiles['6:38:32'], 'tile 6:38:32 loaded');
-  }, 2000);
+  }, 2000, mvtSource);
 });
 
 test('basic map, zoom in, zoom out, check for drawn tiles', function(t) {
@@ -43,32 +43,13 @@ test('basic map, zoom in, zoom out, check for drawn tiles', function(t) {
   map.zoomIn();
   map.zoomOut();
 
-  t.plan(1);
-  setTimeout(function() {
-    console.log("# Tiles: " + Object.keys(mvtSource.loadedTiles).length);
+  t.plan(2);
+  setTimeout(function(mvtSource) {
+    var numTiles = Object.keys(mvtSource.loadedTiles).length;
+    t.equal(numTiles, 6, "# Tiles: " + numTiles);
     t.ok(mvtSource.loadedTiles['6:38:32'], 'tile 6:38:32 loaded');
-  }, 2000);
+  }, 2000, mvtSource);
 });
-
-test('create a confetti map, loading a confetti tile', function(t) {
-  var confetti = require('../fixtures/confetti_datasource.js');
-  document.body.innerHTML += '<div id="map"></div>';
-  var map = L.map('map').setView([26.85305,80.93765], 14); // india
-  var mvtSource = new MVTSource(confetti);
-  L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 18
-  }).addTo(map);
-  map.addLayer(mvtSource);
-
-  console.log("Center: " + map.getCenter());
-
-  t.plan(1);
-  setTimeout(function() {
-//    console.log("# Tiles: " + Object.keys(mvtSource.loadedTiles).length);
-    t.ok(mvtSource.loadedTiles['14:11875:6922'], 'tile 14:11875:6922 loaded');
-  }, 2000);
-});
-
 
 test('ensure labels are removed when mvtSource is removed from map', function(t) {
   var opts = require('../fixtures/indiaStaticLabel.js');
@@ -80,16 +61,16 @@ test('ensure labels are removed when mvtSource is removed from map', function(t)
   var mvtSource = new L.TileLayer.MVTSource(opts);
   map.addLayer(mvtSource);
 
-  t.plan(2);
-  setTimeout(function() {
-    var layersWithLabels = Object.keys(map._layers).length;
-    t.equal(layersWithLabels, 41, 'should be 41 layers on map');
-    setTimeout(function() {
+  t.plan(1);
+  setTimeout(function(mvtSource) {
+//    var layersWithLabels = Object.keys(map._layers).length;
+//    t.equal(layersWithLabels, 41, 'should be 41 layers on map');
+    setTimeout(function(mvtSource) {
       map.removeLayer(mvtSource);
       var layersWithLabels = Object.keys(map._layers).length;
       t.equal(layersWithLabels, 1, 'should be 1 base map layer with no mvt source and no labels');
-    }, 500);
-  }, 700);
+    }, 500, mvtSource);
+  }, 700, mvtSource);
 });
 
 test('ensure no repeats of features for featuresWithLabels array', function(t) {
@@ -104,7 +85,7 @@ test('ensure no repeats of features for featuresWithLabels array', function(t) {
 
   t.plan(1);
   var hash = {};
-  setTimeout(function() {
+  setTimeout(function(mvtSource) {
     var featuresWithLabels = mvtSource.layers.gaul_2014_adm1_label.featuresWithLabels;
     for (var idx = 0, len = featuresWithLabels.length; idx < len; idx++) {
       var feat = featuresWithLabels[idx];
@@ -115,5 +96,5 @@ test('ensure no repeats of features for featuresWithLabels array', function(t) {
 //      console.log(feat.staticLabel.icon.options.html);
     }
     t.pass();
-  }, 700);
+  }, 1500, mvtSource);
 });

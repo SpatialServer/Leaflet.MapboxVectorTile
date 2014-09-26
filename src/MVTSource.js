@@ -190,9 +190,9 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         self.parseVectorTile(parseVT(vt), ctx);
         tileLoaded(self, ctx);
       }
-      else {
-        console.log("xhr.status = " + xhr.status);
-      }
+//      else {
+//        console.log("xhr.status = " + xhr.status);
+//      }
     };
 
     xhr.onerror = function() {
