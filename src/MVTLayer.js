@@ -39,6 +39,18 @@ module.exports = L.TileLayer.Canvas.extend({
     this.featuresWithLabels = [];
   },
 
+  onAdd: function(map) {
+    var self = this;
+    self.map = map;
+    L.TileLayer.Canvas.prototype.onAdd.call(this, map);
+    map.on('layerremove', function(e) {
+      // we only want to do stuff when the layerremove event is on this layer
+      if (e.layer._leaflet_id === self._leaflet_id) {
+        removeLabels(self);
+      }
+    });
+  },
+
   drawTile: function(canvas, tilePoint, zoom) {
 
     var ctx = {
@@ -223,6 +235,7 @@ module.exports = L.TileLayer.Canvas.extend({
     var ca = id.split(":");
     var canvasId = ca[1] + ":" + ca[2];
     if (typeof this._tiles[canvasId] === 'undefined') {
+      console.error("typeof this._tiles[canvasId] === 'undefined'");
       return;
     }
     var canvas = this._tiles[canvasId];
@@ -244,9 +257,23 @@ module.exports = L.TileLayer.Canvas.extend({
     //Get the features for this tile, and redraw them.
     var features = this._canvasIDToFeatures[canvasID].features;
 
+    // we want to skip drawing the selected features and draw them last
+    var selectedFeatures = [];
+
+    // drawing all of the non-selected features
     for (var i = 0; i < features.length; i++) {
       var feature = features[i];
-      feature.draw(canvasID);
+      if (feature.selected) {
+        selectedFeatures.push(feature);
+      } else {
+        feature.draw(canvasID);
+      }
+    }
+
+    // drawing the selected features last
+    for (var j = 0, len2 = selectedFeatures.length; j < len2; j++) {
+      var selFeat = selectedFeatures[j];
+      selFeat.draw(canvasID);
     }
   },
 
@@ -266,9 +293,24 @@ module.exports = L.TileLayer.Canvas.extend({
     else{
       return null;
     }
+  },
+
+  featureWithLabelAdded: function(feature) {
+    this.featuresWithLabels.push(feature);
   }
 
 });
+
+
+function removeLabels(self) {
+  var features = self.featuresWithLabels;
+  for (var i = 0, len = features.length; i < len; i++) {
+    var feat = features[i];
+    feat.removeLabel();
+  }
+  self.featuresWithLabels = [];
+}
+
 
 /**
  * See https://github.com/ariya/phantomjs/blob/master/examples/waitfor.js

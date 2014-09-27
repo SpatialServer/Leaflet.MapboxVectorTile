@@ -5,7 +5,7 @@
 
 function Feature(label, pbfFeature, options) {
   this.dynamicLabel = label;
-  this.pbfFeature = pbfFeature;
+  this.mvtFeature = pbfFeature;
   this.mvtLayer = pbfFeature.mvtLayer;
   this.mvtSource = pbfFeature.mvtLayer.mvtSource;
   this.map = label.map;
@@ -52,8 +52,8 @@ Feature.prototype.computeLabelPosition = function() {
   }
   var dynamicLabel = this.dynamicLabel;
   var job = {
-    extent: this.pbfFeature.extent,
-    tileSize: this.pbfFeature.tileSize,
+    extent: this.mvtFeature.extent,
+    tileSize: this.mvtFeature.tileSize,
     tilePolys: tilePolys
   };
   var feature = this;

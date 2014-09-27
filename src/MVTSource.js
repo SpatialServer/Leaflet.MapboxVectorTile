@@ -80,6 +80,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
     this._tilesToProcess = 0; //store the max number of tiles to be loaded.  Later, we can use this count to count down PBF loading.
 
+    this._onClickSet = false;
   },
 
   onAdd: function(map) {
@@ -87,17 +88,24 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     self.map = map;
     L.TileLayer.Canvas.prototype.onAdd.call(this, map);
 
-    map.on('click', function(e) {
-      self.onClick(e);
-    });
+    // if this layer gets readded to the map, the map actually still has the event handler
+    if (!self._onClickSet) {
+      map.on('click', function(e) {
+        self.onClick(e);
+      });
+      self._onClickSet = true;
+    }
 
-    map.on("layerremove", function(removed) {
-      //This is the layer that was removed.
-      //If it is a TileLayer.MVTSource, then call a method to actually remove the children, too.
-      if (removed.layer.removeChildLayers) {
-        removed.layer.removeChildLayers(map);
+
+    map.on("layerremove", function(e) {
+      // check to see if the layer removed is this one
+      // call a method to remove the child layers (the ones that actually have something drawn on them).
+      if (e.layer._leaflet_id === self._leaflet_id && e.layer.removeChildLayers) {
+        e.layer.removeChildLayers(map);
       }
     });
+
+    self.addChildLayers(map);
 
     if (typeof DynamicLabel === 'function' ) {
       this.dynamicLabel = new DynamicLabel(map, this, {});
@@ -182,12 +190,17 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         var arrayBuffer = new Uint8Array(xhr.response);
         var buf = new Protobuf(arrayBuffer);
         var vt = new VectorTile(buf);
+        //Check the current map layer zoom.  If fast zooming is occurring, then short circuit tiles that are for a different zoom level than we're currently on.
+        if(self._map.getZoom() != ctx.zoom) {
+          console.log("Fetched tile for zoom level " + ctx.zoom + ". Map is at zoom level " + self._map.getZoom());
+          return;
+        }
         self.parseVectorTile(parseVT(vt), ctx);
         tileLoaded(self, ctx);
       }
-      else {
-        console.log("xhr.status = " + xhr.status);
-      }
+//      else {
+//        console.log("xhr.status = " + xhr.status);
+//      }
     };
 
     xhr.onerror = function() {
@@ -288,6 +301,16 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     for (var key in this.layers) {
       var layer = this.layers[key];
       map.removeLayer(layer);
+    }
+  },
+
+  addChildLayers: function(map) {
+    for (var key in this.layers) {
+      var layer = this.layers[key];
+      // layer is set to visible and is not already on map
+      if (layer.visible && !layer._map) {
+        map.addLayer(layer);
+      }
     }
   },
 

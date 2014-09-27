@@ -2,8 +2,9 @@
  * Created by Nicholas Hallahan <nhallahan@spatialdev.com>
  *       on 8/15/14.
  */
-
 var Util = module.exports = {};
+
+var request = require('request');
 
 Util.getContextID = function(ctx) {
   return [ctx.zoom, ctx.tile.x, ctx.tile.y].join(":");
@@ -19,4 +20,17 @@ Util.getContextID = function(ctx) {
  */
 Util.getIDForLayerFeature = function(feature) {
   return feature.properties.id;
+};
+
+Util.getJSON = function(url, callback) {
+  request(url, function(error, response, body) {
+    if (!error && response.statusCode >= 200 && response.statusCode < 300) {
+      var data;
+      try { data = JSON.parse(body); }
+      catch (err) { return callback(err); }
+      callback(null, data);
+    } else {
+      callback(error || new Error(response.statusCode));
+    }
+  });
 };

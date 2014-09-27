@@ -2,37 +2,67 @@
  * Created by Nicholas Hallahan <nhallahan@spatialdev.com>
  *       on 7/31/14.
  */
-
+var Util = require('../MVTUtil');
 module.exports = StaticLabel;
 
-function StaticLabel(pbfFeature, ctx, latLng, style) {
+function StaticLabel(mvtFeature, ctx, latLng, style) {
   var self = this;
-  this.pbfFeature = pbfFeature;
-  this.map = pbfFeature.map;
+  this.mvtFeature = mvtFeature;
+  this.map = mvtFeature.map;
   this.zoom = ctx.zoom;
   this.latLng = latLng;
-  var sty = this.style = style.staticLabel();
   this.selected = false;
 
-  var icon = this.icon = L.divIcon({
+  if (mvtFeature.linkedFeature) {
+    var linkedFeature = mvtFeature.linkedFeature();
+    if (linkedFeature && linkedFeature.selected) {
+      self.selected = true;
+    }
+  }
+
+  if (typeof style.ajaxSource === 'function') {
+    var ajaxEndpoint = style.ajaxSource(mvtFeature);
+    Util.getJSON(ajaxEndpoint, function(error, response, body) {
+      if (error) {
+        throw ['StaticLabel AJAX Error', error];
+        init(self, mvtFeature, ctx, latLng, style, null);
+      } else {
+        init(self, mvtFeature, ctx, latLng, style, response);
+      }
+
+    });
+  } else {
+    init(self, mvtFeature, ctx, latLng, style, null);
+  }
+
+}
+
+function init(self, mvtFeature, ctx, latLng, style, ajaxData) {
+  var sty = self.style = style.staticLabel(mvtFeature, ajaxData);
+  var icon = self.icon = L.divIcon({
     className: sty.cssClass || 'label-icon-text',
-    html: sty.html || 'No Label',
+    html: sty.html,
     iconSize: sty.iconSize || [50,50]
   });
 
-  this.marker = L.marker(latLng, {icon: icon}).addTo(this.map);
+  self.marker = L.marker(latLng, {icon: icon}).addTo(self.map);
 
-  this.marker.on('click', function(e) {
+  if (self.selected) {
+    self.marker._icon.classList.add(self.style.cssSelectedClass || 'label-icon-text-selected');
+  }
+
+  self.marker.on('click', function(e) {
     self.toggle();
   });
 
-  this.map.on('zoomend', function(e) {
+  self.map.on('zoomend', function(e) {
     var newZoom = e.target.getZoom();
     if (self.zoom !== newZoom) {
       self.map.removeLayer(self.marker);
     }
   });
 }
+
 
 StaticLabel.prototype.toggle = function() {
   if (this.selected) {
@@ -44,14 +74,18 @@ StaticLabel.prototype.toggle = function() {
 
 StaticLabel.prototype.select = function() {
   this.selected = true;
-  this.marker._icon.classList.add('label-icon-text-selected');
-  var linkedFeature = this.pbfFeature.linkedFeature();
+  this.marker._icon.classList.add(this.style.cssSelectedClass || 'label-icon-text-selected');
+  var linkedFeature = this.mvtFeature.linkedFeature();
   if (!linkedFeature.selected) linkedFeature.select();
 };
 
 StaticLabel.prototype.deselect = function() {
   this.selected = false;
-  this.marker._icon.classList.remove('label-icon-text-selected');
-  var linkedFeature = this.pbfFeature.linkedFeature();
+  this.marker._icon.classList.remove(this.style.cssSelectedClass || 'label-icon-text-selected');
+  var linkedFeature = this.mvtFeature.linkedFeature();
   if (linkedFeature.selected) linkedFeature.deselect();
+};
+
+StaticLabel.prototype.remove = function() {
+  this.map.removeLayer(this.marker);
 };
