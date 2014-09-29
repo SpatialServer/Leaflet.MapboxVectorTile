@@ -99,6 +99,14 @@ var mvtSource = new L.TileLayer.MVTSource({
       return layerName.replace('_label','');
     }
     return layerName + '_label';
+  },
+
+  /**
+   * Callback function that fires whenever a clickable feature is clicked on the map.
+   * @param evt
+   */
+  onClick: function(evt) {
+    console.log('click');
   }
 
 });
