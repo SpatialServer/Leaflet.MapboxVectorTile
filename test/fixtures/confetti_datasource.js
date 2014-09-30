@@ -1,5 +1,6 @@
 module.exports = {
-  url: "http://spatialserver.spatialdev.com/services/postgis/cicos_2014/geom/vector-tiles/{z}/{x}/{y}.pbf?fields=type,id",
+  url: "http://spatialserver.spatialdev.com/services/postgis/cicos_2014/geom/vector-tiles/{z}/{x}/{y}.pbf?fields=type,id", //Original Datasource - this is dynamic data, tho
+  //url: "http://localhost/Leaflet.MapboxVectorTile/test/fixtures/pbfs/{z}.{x}.{y}.pbf",
   debug: true,
   clickableLayers: [''],
 

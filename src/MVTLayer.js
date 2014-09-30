@@ -240,10 +240,6 @@ module.exports = L.TileLayer.Canvas.extend({
     }
     var canvas = this._tiles[canvasId];
 
-//  old school way of clearing a canvas
-//    canvas.width = canvas.width;
-
-//  explicit way of clearing a canvas (better perf)
     var context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
   },
@@ -254,6 +250,9 @@ module.exports = L.TileLayer.Canvas.extend({
   },
 
   redrawTile: function(canvasID) {
+    //First, clear the canvas
+    this.clearTile(canvasID);
+
     //Get the features for this tile, and redraw them.
     var features = this._canvasIDToFeatures[canvasID].features;
 
