@@ -288,7 +288,7 @@ function pbfSelectedStyle(vectorTileFeature) {
 map.on("click", function(e) {
     //Take the click event and pass it to the group layers.
 
-    pbfSource.onClick(e, function (evt) {
+    pbfSource._onClick(e, function (evt) {
         if (evt && evt.feature) {
             //alert("Clicked Country: " + evt.feature.name_0);
             $("#idResults").html("Clicked Country: " + evt.feature.properties.name_0);

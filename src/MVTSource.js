@@ -90,9 +90,15 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
     // if this layer gets readded to the map, the map actually still has the event handler
     if (!self._onClickSet) {
-      map.on('click', function(e) {
-        self.onClick(e);
-      });
+      if (typeof self.options.onClick === 'function') {
+        map.on('click', function(e) {
+          self._onClick(e, self.options.onClick);
+        });
+      } else {
+        map.on('click', function(e) {
+          self._onClick(e);
+        });
+      }
       self._onClickSet = true;
     }
 
@@ -318,33 +324,29 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     this._eventHandlers[eventType] = callback;
   },
 
-  onClick: function(evt, cb) {
+  _onClick: function(evt, onClick) {
     //Here, pass the event on to the child MVTLayer and have it do the hit test and handle the result.
     var self = this;
+    evt.tileID = getTileURL(evt.latlng.lat, evt.latlng.lng, this._map.getZoom());
+    var clickableLayers = self.options.clickableLayers;
+    var layers = self.layers;
 
-    evt.tileID =  getTileURL(evt.latlng.lat, evt.latlng.lng, this._map.getZoom());
-
-    //If no layer is specified as clickable, just use the 1st one.
-    if(this.options.clickableLayers.length == 0) {
-      var names = Object.keys(self.layers);
-      self.layers[names[0]].handleClickEvent(evt, function (evt) {
-        if (typeof cb === 'function') {
-          cb(evt);
-        }
-      });
-    }
-    else{
-      for (var key in this.layers) {
-        var layer = this.layers[key];
-        if(self.options.clickableLayers.indexOf(key) > -1){
+    // We must have an array of clickable layers, otherwise, we just pass
+    // the event to the public onClick callback in options.
+    if (clickableLayers && clickableLayers.length > 0) {
+      for (var i = 0, len = clickableLayers.length; i < len; i++) {
+        var key = clickableLayers[i];
+        var layer = layers[key];
+        if (layer) {
           layer.handleClickEvent(evt, function(evt) {
-            if (typeof cb === 'function') {
-              cb(evt);
-            }
+            onClick(evt);
           });
         }
       }
+    } else {
+      onClick(evt);
     }
+
   },
 
   setFilter: function(filterFunction, layerName) {
