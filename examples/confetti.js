@@ -14,7 +14,7 @@ L.tileLayer('http://{s}.tiles.mapbox.com/v3/spatialdev.map-c9z2cyef/{z}/{x}/{y}.
 var pbfSource = new L.TileLayer.MVTSource({
   url: "http://spatialserver.spatialdev.com/services/postgis/cicos_2014/geom/vector-tiles/{z}/{x}/{y}.pbf?fields=type,id",
   debug: true,
-  clickableLayers: [''],
+  clickableLayers: null,
 
   getIDForLayerFeature: function(feature) {
     return feature.properties.id;
@@ -125,6 +125,10 @@ var pbfSource = new L.TileLayer.MVTSource({
     }
 
     return style;
+  },
+
+  onClick: function(evt) {
+    console.log('clickkkk');
   }
 
 });
