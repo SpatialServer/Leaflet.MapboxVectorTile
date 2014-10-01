@@ -49,6 +49,6 @@ test('create a confetti map, filter confetti, test output - clearTile', function
     var features = lyr._canvasIDToFeatures[tileID].features;
     console.log("# Features: " + features.length);
 
-    t.ok(mvtSource.loadedTiles[tileID], tileID + ' loaded');
+    t.equal(features.length, 1);
   }, 10000, mvtSource);
 });
