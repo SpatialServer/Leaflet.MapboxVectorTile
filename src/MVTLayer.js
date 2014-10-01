@@ -34,7 +34,6 @@ module.exports = L.TileLayer.Canvas.extend({
     this.style = options.style;
     this.name = options.name;
     this._canvasIDToFeatures = {};
-    this.visible = true;
     this.features = {};
     this.featuresWithLabels = [];
   },
@@ -118,13 +117,19 @@ module.exports = L.TileLayer.Canvas.extend({
   parseVectorTileLayer: function(vtl, ctx) {
     var self = this;
     var tilePoint = ctx.tile;
+    var layerCtx  = { canvas: null, id: ctx.id, tile: ctx.tile, zoom: ctx.zoom, tileSize: ctx.tileSize};
 
     //See if we can pluck the child tile from this PBF tile layer based on the master layer's tile id.
-    ctx.canvas = self._tiles[tilePoint.x + ":" + tilePoint.y];
+    layerCtx.canvas = self._tiles[tilePoint.x + ":" + tilePoint.y];
+
+
 
     //Initialize this tile's feature storage hash, if it hasn't already been created.  Used for when filters are updated, and features are cleared to prepare for a fresh redraw.
-    if (!this._canvasIDToFeatures[ctx.id]) {
-      this._initializeFeaturesHash(ctx);
+    if (!this._canvasIDToFeatures[layerCtx.id]) {
+      this._initializeFeaturesHash(layerCtx);
+    }else{
+      //Clear this tile's previously saved features.
+      this.clearTileFeatureHash(layerCtx.id);
     }
 
     var features = vtl.parsedFeatures;
@@ -138,7 +143,7 @@ module.exports = L.TileLayer.Canvas.extend({
        */
       var filter = self.options.filter;
       if (typeof filter === 'function') {
-        if ( filter(vtf, ctx) === false ) continue;
+        if ( filter(vtf, layerCtx) === false ) continue;
       }
 
       var getIDForLayerFeature;
@@ -156,7 +161,7 @@ module.exports = L.TileLayer.Canvas.extend({
        */
       var layerOrdering = self.options.layerOrdering;
       if (typeof layerOrdering === 'function') {
-        layerOrdering(vtf, ctx); //Applies a custom property to the feature, which is used after we're thru iterating to sort
+        layerOrdering(vtf, layerCtx); //Applies a custom property to the feature, which is used after we're thru iterating to sort
       }
 
       //Create a new MVTFeature if one doesn't already exist for this feature.
@@ -165,17 +170,17 @@ module.exports = L.TileLayer.Canvas.extend({
         var style = self.style(vtf);
 
         //create a new feature
-        self.features[uniqueID] = mvtFeature = new MVTFeature(self, vtf, ctx, uniqueID, style, this._map);
+        self.features[uniqueID] = mvtFeature = new MVTFeature(self, vtf, layerCtx, uniqueID, style, this._map);
         if (typeof style.dynamicLabel === 'function') {
           self.featuresWithLabels.push(mvtFeature);
         }
       } else {
         //Add the new part to the existing feature
-        mvtFeature.addTileFeature(vtf, ctx);
+        mvtFeature.addTileFeature(vtf, layerCtx);
       }
 
       //Associate & Save this feature with this tile for later
-      if(ctx && ctx.id) self._canvasIDToFeatures[ctx.id]['features'].push(mvtFeature);
+      if(layerCtx && layerCtx.id) self._canvasIDToFeatures[layerCtx.id]['features'].push(mvtFeature);
 
     }
 
@@ -186,12 +191,12 @@ module.exports = L.TileLayer.Canvas.extend({
     var layerOrdering = self.options.layerOrdering;
     if (layerOrdering) {
       //We've assigned the custom zIndex property when iterating above.  Now just sort.
-      self._canvasIDToFeatures[ctx.id].features = self._canvasIDToFeatures[ctx.id].features.sort(function(a, b) {
+      self._canvasIDToFeatures[layerCtx.id].features = self._canvasIDToFeatures[layerCtx.id].features.sort(function(a, b) {
         return -(b.properties.zIndex - a.properties.zIndex)
       });
     }
 
-    self.redrawTile(ctx.id);
+    self.redrawTile(layerCtx.id);
   },
 
   // NOTE: a placeholder for a function that, given a feature, returns a style object used to render the feature itself
@@ -244,8 +249,11 @@ module.exports = L.TileLayer.Canvas.extend({
     context.clearRect(0, 0, canvas.width, canvas.height);
   },
 
+  clearTileFeatureHash: function(canvasID){
+    this._canvasIDToFeatures[canvasID] = { features: []}; //Get rid of all saved features
+  },
+
   clearLayerFeatureHash: function(){
-    this._canvasIDToFeatures = {}; //Get rid of all saved features
     this.features = {};
   },
 

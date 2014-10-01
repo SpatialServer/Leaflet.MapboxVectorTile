@@ -92,13 +92,35 @@ MVTFeature.prototype.getPathsForTile = function(canvasID) {
 };
 
 MVTFeature.prototype.addTileFeature = function(vtf, ctx) {
+  //Store the important items in the tiles list
 
-  //Store the important items in the parts list
+  //We only want to store info for tiles for the current map zoom.  If it is tile info for another zoom level, ignore it
+  //Also, if there are existing tiles in the list for other zoom levels, expunge them.
+  var zoom = this.map.getZoom();
+
+  if(ctx.zoom != zoom) return;
+
+  this.clearTileFeatures(zoom); //TODO: This iterates thru all tiles every time a new tile is added.  Figure out a better way to do this.
+
   this.tiles[ctx.id] = {
     ctx: ctx,
     vtf: vtf,
     paths: []
   };
+
+};
+
+
+/**
+ * Clear the inner list of tile features if they don't match the given zoom.
+ *
+ * @param zoom
+ */
+MVTFeature.prototype.clearTileFeatures = function(zoom) {
+  //If stored tiles exist for other zoom levels, expunge them from the list.
+  for (var key in this.tiles) {
+     if(key.split(":")[0] != zoom) delete this.tiles[key];
+  }
 };
 
 /**
@@ -113,9 +135,6 @@ function redrawTiles(self) {
   var mvtLayer = self.mvtLayer;
 
   for (var id in tiles) {
-    //Clear the tile
-    mvtLayer.clearTile(id);
-
     //Redraw the tile
     mvtLayer.redrawTile(id);
   }
@@ -173,7 +192,15 @@ MVTFeature.prototype._drawPoint = function(ctx, coordsArray, style) {
 
   var p = this._tilePoint(coordsArray[0][0]);
   var c = ctx.canvas;
-  var ctx2d = c.getContext('2d');
+  var ctx2d;
+  try{
+    ctx2d = c.getContext('2d');
+  }
+  catch(e){
+    console.log("_drawPoint error: " + e);
+    return;
+  }
+
   ctx2d.beginPath();
   ctx2d.fillStyle = style.color;
   ctx2d.arc(p.x, p.y, radius, 0, Math.PI * 2);

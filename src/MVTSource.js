@@ -10,9 +10,9 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   options: {
     debug: false,
     url: "", //URL TO Vector Tile Source,
-    clickableLayers: [], //which layers inside the vector tile should have click events?
     getIDForLayerFeature: function() {},
-    tileSize: 256
+    tileSize: 256,
+    visibleLayers: {}
   },
   layers: {}, //Keep a list of the layers contained in the PBFs
   processedTiles: {}, //Keep a list of tiles that have been processed already
@@ -179,7 +179,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 //    //if we've already parsed it, don't get it again.
 //    if(vectorTile){
 //      console.log("Skipping fetching " + ctx.id);
-//      self.parseVectorTile(parseVT(vectorTile), ctx, true);
+//      self.checkVectorTileLayers(parseVT(vectorTile), ctx, true);
 //      self.reduceTilesToProcessCount();
 //      return;
 //    }
@@ -201,7 +201,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
           console.log("Fetched tile for zoom level " + ctx.zoom + ". Map is at zoom level " + self._map.getZoom());
           return;
         }
-        self.parseVectorTile(parseVT(vt), ctx);
+        self.checkVectorTileLayers(parseVT(vt), ctx);
         tileLoaded(self, ctx);
       }
 //      else {
@@ -229,34 +229,45 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     }
   },
 
-  parseVectorTile: function(vt, ctx, parsed) {
+  checkVectorTileLayers: function(vt, ctx, parsed) {
     var self = this;
 
-    for (var key in vt.layers) {
-      var lyr = vt.layers[key];
-      if (!self.layers[key]) {
-        //Create MVTLayer or MVTPointLayer for user
-        self.layers[key] = self.createMVTLayer(key, lyr.parsedFeatures[0].type || null);
-      }
-
-      //If layer is marked as visible, examine the contents.
-      if (self.layers[key].visible === true) {
-        if(parsed){
-          //We've already parsed it.  Go get canvas and draw.
-          self.layers[key].getCanvas(ctx, lyr);
-        }else{
-          self.layers[key].parseVectorTileLayer(lyr, ctx);
-
-          //if we have a reasonable amount of features inside, lets store it in memory.  Otherwise, fetch every time to avoid memory pileup.
-          if(lyr.parsedFeatures.length < 25){
-            this.processedTiles[ctx.zoom][ctx.id] = vt;
-          }
+    //Check if there are specified visible layers
+    if(self.options.visibleLayers.length > 0){
+      //only let thru the layers listed in the visibleLayers array
+      for(var i=0; i < self.options.visibleLayers.length; i++){
+        var layerName = self.options.visibleLayers[i];
+        if(vt.layers[layerName]){
+           //Proceed with parsing
+          self.prepareMVTLayers(vt.layers[layerName], layerName, ctx, parsed);
         }
+      }
+    }else{
+      //Parse all vt.layers
+      for (var key in vt.layers) {
+        self.prepareMVTLayers(vt.layers[key], key, ctx, parsed);
       }
     }
 
     //Make sure manager layer is always in front
     this.bringToFront();
+  },
+
+  prepareMVTLayers: function(lyr ,key, ctx, parsed) {
+    var self = this;
+
+    if (!self.layers[key]) {
+      //Create MVTLayer or MVTPointLayer for user
+      self.layers[key] = self.createMVTLayer(key, lyr.parsedFeatures[0].type || null);
+    }
+
+    if (parsed) {
+      //We've already parsed it.  Go get canvas and draw.
+      self.layers[key].getCanvas(ctx, lyr);
+    } else {
+      self.layers[key].parseVectorTileLayer(lyr, ctx);
+    }
+
   },
 
   createMVTLayer: function(key, type) {
@@ -327,9 +338,10 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   _onClick: function(evt, onClick) {
     //Here, pass the event on to the child MVTLayer and have it do the hit test and handle the result.
     var self = this;
-    evt.tileID = getTileURL(evt.latlng.lat, evt.latlng.lng, this._map.getZoom());
     var clickableLayers = self.options.clickableLayers;
     var layers = self.layers;
+
+    evt.tileID =  getTileURL(evt.latlng.lat, evt.latlng.lng, this.map.getZoom());
 
     // We must have an array of clickable layers, otherwise, we just pass
     // the event to the public onClick callback in options.
@@ -366,12 +378,14 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
           layer.options.filter = filterFunction; //Assign filter to child layer, only if name matches
           //After filter is set, the old feature hashes are invalid.  Clear them for next draw.
           layer.clearLayerFeatureHash();
+          layer.clearTileFeatureHash();
         }
       }
       else{
         layer.options.filter = filterFunction; //Assign filter to child layer
         //After filter is set, the old feature hashes are invalid.  Clear them for next draw.
         layer.clearLayerFeatureHash();
+        layer.clearTileFeatureHash();
       }
     }
 
