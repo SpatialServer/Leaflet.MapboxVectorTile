@@ -156,6 +156,7 @@ MVTFeature.prototype.toggle = function() {
 
 MVTFeature.prototype.select = function() {
   this.selected = true;
+  this.mvtSource.featureSelected(this);
   redrawTiles(this);
   var linkedFeature = this.linkedFeature();
   if (linkedFeature && linkedFeature.staticLabel && !linkedFeature.staticLabel.selected) {

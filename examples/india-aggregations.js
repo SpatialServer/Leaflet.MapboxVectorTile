@@ -11,6 +11,13 @@ var mvtSource = new L.TileLayer.MVTSource({
   url: "http://spatialserver.spatialdev.com/services/vector-tiles/gaul_fsp_india/{z}/{x}/{y}.pbf",
   debug: true,
   clickableLayers: ['gaul_2014_adm1'],
+
+  /**
+   * If you click on a feature, if there is a different
+   * currently selected feature, that gets toggled off.
+   */
+  mutexToggle: true,
+
   getIDForLayerFeature: function(feature) {
     return feature._id;
   },

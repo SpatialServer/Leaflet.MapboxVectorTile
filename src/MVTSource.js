@@ -388,9 +388,17 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         layer.clearTileFeatureHash();
       }
     }
+  },
 
-
+  featureSelected: function(mvtFeature) {
+    if (this.options.mutexToggle) {
+      if (this._selectedFeature) {
+        this._selectedFeature.deselect();
+      }
+      this._selectedFeature = mvtFeature;
+    }
   }
+
 });
 
 
