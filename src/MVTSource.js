@@ -322,11 +322,25 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   },
 
   addChildLayers: function(map) {
-    for (var key in this.layers) {
-      var layer = this.layers[key];
-      // layer is set to visible and is not already on map
-      if (layer.visible && !layer._map) {
-        map.addLayer(layer);
+
+    if(self.options.visibleLayers.length > 0){
+      //only let thru the layers listed in the visibleLayers array
+      for(var i=0; i < self.options.visibleLayers.length; i++){
+        var layerName = self.options.visibleLayers[i];
+        var layer = this.layers[layerName];
+        if(layer){
+          //Proceed with parsing
+          map.addLayer(layer);
+        }
+      }
+    }else{
+      //Add all layers
+      for (var key in this.layers) {
+        var layer = this.layers[key];
+        // layer is set to visible and is not already on map
+        if (!layer._map) {
+          map.addLayer(layer);
+        }
       }
     }
   },
