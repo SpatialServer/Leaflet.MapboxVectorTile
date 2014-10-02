@@ -79,8 +79,6 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     this._eventHandlers = {};
 
     this._tilesToProcess = 0; //store the max number of tiles to be loaded.  Later, we can use this count to count down PBF loading.
-
-    this._onClickSet = false;
   },
 
   onAdd: function(map) {
@@ -88,13 +86,20 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     self.map = map;
     L.TileLayer.Canvas.prototype.onAdd.call(this, map);
 
-    // if this layer gets readded to the map, the map actually still has the event handler
-    if (!self._onClickSet) {
-      map.on('click', function(e) {
-        self._onClick(e);
-      });
-      self._onClickSet = true;
-    }
+    var mapOnClickCallback = function(e) {
+      self._onClick(e);
+    };
+
+    map.on('click', mapOnClickCallback);
+
+    map.on("layerremove", function(e) {
+      // check to see if the layer removed is this one
+      // call a method to remove the child layers (the ones that actually have something drawn on them).
+      if (e.layer._leaflet_id === self._leaflet_id && e.layer.removeChildLayers) {
+        e.layer.removeChildLayers(map);
+        map.off('click', mapOnClickCallback);
+      }
+    });
 
     self.addChildLayers(map);
 
@@ -102,11 +107,6 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
       this.dynamicLabel = new DynamicLabel(map, this, {});
     }
 
-  },
-
-  onRemove: function(map) {
-    // call a method to remove the child layers (the ones that actually have something drawn on them).
-    this.removeChildLayers(map);
   },
 
   drawTile: function(canvas, tilePoint, zoom) {
