@@ -12,7 +12,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     url: "", //URL TO Vector Tile Source,
     getIDForLayerFeature: function() {},
     tileSize: 256,
-    visibleLayers: {}
+    visibleLayers: []
   },
   layers: {}, //Keep a list of the layers contained in the PBFs
   processedTiles: {}, //Keep a list of tiles that have been processed already
@@ -233,7 +233,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     var self = this;
 
     //Check if there are specified visible layers
-    if(self.options.visibleLayers.length > 0){
+    if(self.options.visibleLayers && self.options.visibleLayers.length > 0){
       //only let thru the layers listed in the visibleLayers array
       for(var i=0; i < self.options.visibleLayers.length; i++){
         var layerName = self.options.visibleLayers[i];
