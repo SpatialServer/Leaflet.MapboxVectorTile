@@ -10909,6 +10909,7 @@ MVTFeature.prototype.toggle = function() {
 
 MVTFeature.prototype.select = function() {
   this.selected = true;
+  this.mvtSource.featureSelected(this);
   redrawTiles(this);
   var linkedFeature = this.linkedFeature();
   if (linkedFeature && linkedFeature.staticLabel && !linkedFeature.staticLabel.selected) {
@@ -11659,7 +11660,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         var buf = new Protobuf(arrayBuffer);
         var vt = new VectorTile(buf);
         //Check the current map layer zoom.  If fast zooming is occurring, then short circuit tiles that are for a different zoom level than we're currently on.
-        if(self._map.getZoom() != ctx.zoom) {
+        if(self.map && self.map.getZoom() != ctx.zoom) {
           console.log("Fetched tile for zoom level " + ctx.zoom + ". Map is at zoom level " + self._map.getZoom());
           return;
         }
@@ -11784,11 +11785,25 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   },
 
   addChildLayers: function(map) {
-    for (var key in this.layers) {
-      var layer = this.layers[key];
-      // layer is set to visible and is not already on map
-      if (layer.visible && !layer._map) {
-        map.addLayer(layer);
+    var self = this;
+    if(self.options.visibleLayers.length > 0){
+      //only let thru the layers listed in the visibleLayers array
+      for(var i=0; i < self.options.visibleLayers.length; i++){
+        var layerName = self.options.visibleLayers[i];
+        var layer = this.layers[layerName];
+        if(layer){
+          //Proceed with parsing
+          map.addLayer(layer);
+        }
+      }
+    }else{
+      //Add all layers
+      for (var key in this.layers) {
+        var layer = this.layers[key];
+        // layer is set to visible and is not already on map
+        if (!layer._map) {
+          map.addLayer(layer);
+        }
       }
     }
   },
@@ -11850,9 +11865,17 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         layer.clearTileFeatureHash();
       }
     }
+  },
 
-
+  featureSelected: function(mvtFeature) {
+    if (this.options.mutexToggle) {
+      if (this._selectedFeature) {
+        this._selectedFeature.deselect();
+      }
+      this._selectedFeature = mvtFeature;
+    }
   }
+
 });
 
 

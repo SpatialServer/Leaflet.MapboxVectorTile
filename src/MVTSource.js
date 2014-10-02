@@ -322,7 +322,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   },
 
   addChildLayers: function(map) {
-
+    var self = this;
     if(self.options.visibleLayers.length > 0){
       //only let thru the layers listed in the visibleLayers array
       for(var i=0; i < self.options.visibleLayers.length; i++){
