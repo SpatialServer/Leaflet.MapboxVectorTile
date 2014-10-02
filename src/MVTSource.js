@@ -197,7 +197,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         var buf = new Protobuf(arrayBuffer);
         var vt = new VectorTile(buf);
         //Check the current map layer zoom.  If fast zooming is occurring, then short circuit tiles that are for a different zoom level than we're currently on.
-        if(self._map.getZoom() != ctx.zoom) {
+        if(self.map && self.map.getZoom() != ctx.zoom) {
           console.log("Fetched tile for zoom level " + ctx.zoom + ". Map is at zoom level " + self._map.getZoom());
           return;
         }
@@ -402,9 +402,17 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         layer.clearTileFeatureHash();
       }
     }
+  },
 
-
+  featureSelected: function(mvtFeature) {
+    if (this.options.mutexToggle) {
+      if (this._selectedFeature) {
+        this._selectedFeature.deselect();
+      }
+      this._selectedFeature = mvtFeature;
+    }
   }
+
 });
 
 

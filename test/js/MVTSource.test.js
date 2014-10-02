@@ -98,3 +98,42 @@ test('ensure no repeats of features for featuresWithLabels array', function(t) {
     t.pass();
   }, 1500, mvtSource);
 });
+
+
+// NH TODO: Some strange error happens with this test, look into further...
+// not ok 1 Error: TypeError: 'undefined' is not a function (evaluating 'self.callback.bind()') on line 27079
+//test('ensure mutex toggle works', function(t) {
+//  var opts = require('../fixtures/indiaAggregationsMutex.js');
+//  document.body.innerHTML += '<div id="map"></div>';
+//  var map = L.map('map').setView([25.40,79.409], 4); // Northern India
+//  L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+//    maxZoom: 18
+//  }).addTo(map);
+//  var mvtSource = new L.TileLayer.MVTSource(opts);
+//  map.addLayer(mvtSource);
+//
+//  t.plan(1);
+//  setTimeout(function(mvtSource) {
+//    var features = mvtSource.layers.gaul_2014_adm1.features;
+//    var idx = 0;
+//    for (var featId in features) {
+//      ++idx;
+//      if (id > 3) {
+//        break;
+//      }
+//      var feat = features[featId];
+//      feat.toggle();
+//    }
+//
+//    var selectedFeaturesCount = 0;
+//    for (var featId in features) {
+//      var feat = features[featId];
+//      if (feat.selected) {
+//        ++selectedFeaturesCount;
+//      }
+//    }
+//
+//    t.equal(selectedFeaturesCount, 1, 'there should only be one selected feature');
+//
+//  }, 1500, mvtSource);
+//});
