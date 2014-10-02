@@ -90,15 +90,9 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
     // if this layer gets readded to the map, the map actually still has the event handler
     if (!self._onClickSet) {
-      if (typeof self.options.onClick === 'function') {
-        map.on('click', function(e) {
-          self._onClick(e, self.options.onClick);
-        });
-      } else {
-        map.on('click', function(e) {
-          self._onClick(e);
-        });
-      }
+      map.on('click', function(e) {
+        self._onClick(e);
+      });
       self._onClickSet = true;
     }
 
@@ -345,9 +339,10 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     this._eventHandlers[eventType] = callback;
   },
 
-  _onClick: function(evt, onClick) {
+  _onClick: function(evt) {
     //Here, pass the event on to the child MVTLayer and have it do the hit test and handle the result.
     var self = this;
+    var onClick = self.options.onClick;
     var clickableLayers = self.options.clickableLayers;
     var layers = self.layers;
 
