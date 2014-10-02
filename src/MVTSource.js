@@ -402,6 +402,15 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
       }
       this._selectedFeature = mvtFeature;
     }
+    if (this.options.onSelect) {
+      this.options.onSelect(mvtFeature);
+    }
+  },
+
+  featureDeselected: function(mvtFeature) {
+    if (this.options.onDeselect) {
+      this.options.onDeselect(mvtFeature);
+    }
   }
 
 });

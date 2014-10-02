@@ -166,6 +166,7 @@ MVTFeature.prototype.select = function() {
 
 MVTFeature.prototype.deselect = function() {
   this.selected = false;
+  this.mvtSource.featureDeselected(this);
   redrawTiles(this);
   var linkedFeature = this.linkedFeature();
   if (linkedFeature && linkedFeature.staticLabel && linkedFeature.staticLabel.selected) {
