@@ -102,21 +102,17 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
       self._onClickSet = true;
     }
 
-
-    map.on("layerremove", function(e) {
-      // check to see if the layer removed is this one
-      // call a method to remove the child layers (the ones that actually have something drawn on them).
-      if (e.layer._leaflet_id === self._leaflet_id && e.layer.removeChildLayers) {
-        e.layer.removeChildLayers(map);
-      }
-    });
-
     self.addChildLayers(map);
 
     if (typeof DynamicLabel === 'function' ) {
       this.dynamicLabel = new DynamicLabel(map, this, {});
     }
 
+  },
+
+  onRemove: function(map) {
+    // call a method to remove the child layers (the ones that actually have something drawn on them).
+    this.removeChildLayers(map);
   },
 
   drawTile: function(canvas, tilePoint, zoom) {
