@@ -194,9 +194,6 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         self.checkVectorTileLayers(parseVT(vt), ctx);
         tileLoaded(self, ctx);
       }
-//      else {
-//        console.log("xhr.status = " + xhr.status);
-//      }
     };
 
     xhr.onerror = function() {
@@ -216,6 +213,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     if(!this._tilesToProcess){
       //Trigger event letting us know that all PBFs have been loaded and processed (or 404'd).
       if(this._eventHandlers["PBFLoad"]) this._eventHandlers["PBFLoad"]();
+      this._pbfLoaded();
     }
   },
 
@@ -238,9 +236,6 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         self.prepareMVTLayers(vt.layers[key], key, ctx, parsed);
       }
     }
-
-    //Make sure manager layer is always in front
-    this.bringToFront();
   },
 
   prepareMVTLayers: function(lyr ,key, ctx, parsed) {
@@ -290,14 +285,18 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   hideLayer: function(id) {
     if (this.layers[id]) {
       this._map.removeLayer(this.layers[id]);
-      this.layers[id].visible = false;
+      if(this.options.visibleLayers.indexOf("id") > -1){
+        this.visibleLayers.splice(this.options.visibleLayers.indexOf("id"), 1);
+      }
     }
   },
 
   showLayer: function(id) {
     if (this.layers[id]) {
-      this.layers[id].visible = true;
       this._map.addLayer(this.layers[id]);
+      if(this.options.visibleLayers.indexOf("id") == -1){
+        this.visibleLayers.push(id);
+      }
     }
     //Make sure manager layer is always in front
     this.bringToFront();
@@ -411,6 +410,14 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     if (this.options.onDeselect) {
       this.options.onDeselect(mvtFeature);
     }
+  }
+,
+
+  _pbfLoaded: function(){
+    //Fires when all tiles from this layer have been loaded and drawn (or 404'd).
+
+    //Make sure manager layer is always in front
+    this.bringToFront();
   }
 
 });
