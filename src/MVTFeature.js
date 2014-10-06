@@ -50,6 +50,7 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
 
 MVTFeature.prototype.setStyle = function(styleFn) {
   this.style = styleFn(this);
+  this.removeLabel();
   redrawTiles(this);
 };
 
@@ -63,6 +64,10 @@ MVTFeature.prototype.draw = function(canvasID) {
   //Get the actual canvas from the parent layer's _tiles object.
   var xy = canvasID.split(":").slice(1, 3).join(":");
   ctx.canvas = this.mvtLayer._tiles[xy];
+
+//  This could be used to directly compute the style function from the layer on every draw.
+//  This is much less efficient...
+//  this.style = this.mvtLayer.style(this);
 
   if (this.selected) {
     var style = this.style.selected || this.style;
