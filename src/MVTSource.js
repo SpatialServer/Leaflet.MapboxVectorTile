@@ -400,15 +400,15 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
    * @param styleFunction
    * @param layerName
    */
-  setStyle: function(styleFunction, layerName) {
+  setStyle: function(styleFn, layerName) {
     for (var key in this.layers) {
       var layer = this.layers[key];
       if (layerName) {
         if(key.toLowerCase() == layerName.toLowerCase()) {
-          layer.style = styleFunction;
+          layer.setStyle(styleFn);
         }
       } else {
-        layer.style = styleFunction;
+        layer.setStyle(styleFn);
       }
     }
   },

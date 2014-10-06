@@ -10,6 +10,7 @@ module.exports = MVTFeature;
 function MVTFeature(mvtLayer, vtf, ctx, id, style) {
   if (!vtf) return null;
 
+  // Apply all of the properties of vtf to this object.
   for (var key in vtf) {
     this[key] = vtf[key];
   }
@@ -46,6 +47,11 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
     this.dynamicLabel = this.mvtSource.dynamicLabel.createFeature(this);
   }
 }
+
+MVTFeature.prototype.setStyle = function(styleFn) {
+  this.style = styleFn(this);
+  redrawTiles(this);
+};
 
 MVTFeature.prototype.draw = function(canvasID) {
   //Get the info from the tiles list
@@ -139,12 +145,6 @@ function redrawTiles(self) {
     mvtLayer.redrawTile(id);
   }
 }
-
-MVTFeature.prototype.setStyle = function(style) {
-  //Set this feature's style and redraw all canvases that this thing is a part of
-  this.style = style;
-  redrawTiles(this);
-};
 
 MVTFeature.prototype.toggle = function() {
   if (this.selected) {

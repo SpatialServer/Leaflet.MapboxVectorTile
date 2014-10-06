@@ -199,9 +199,12 @@ module.exports = L.TileLayer.Canvas.extend({
     self.redrawTile(layerCtx.id);
   },
 
-  // NOTE: a placeholder for a function that, given a feature, returns a style object used to render the feature itself
-  style: function(feature) {
-    // override with your code
+  setStyle: function(styleFn) {
+    this.style = styleFn;
+    for (var key in this.features) {
+      var feat = this.features[key];
+      feat.setStyle(styleFn);
+    }
   },
 
   //This is the old way.  It works, but is slow for mouseover events.  Fine for click events.
