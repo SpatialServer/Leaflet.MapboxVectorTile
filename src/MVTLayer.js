@@ -205,6 +205,11 @@ module.exports = L.TileLayer.Canvas.extend({
       var feat = this.features[key];
       feat.setStyle(styleFn);
     }
+    var z = this.map.getZoom();
+    for (var key in this._tiles) {
+      var id = z + ':' + key;
+      this.redrawTile(id);
+    }
   },
 
   //This is the old way.  It works, but is slow for mouseover events.  Fine for click events.

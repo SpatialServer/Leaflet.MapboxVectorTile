@@ -51,7 +51,6 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
 MVTFeature.prototype.setStyle = function(styleFn) {
   this.style = styleFn(this);
   this.removeLabel();
-  redrawTiles(this);
 };
 
 MVTFeature.prototype.draw = function(canvasID) {
