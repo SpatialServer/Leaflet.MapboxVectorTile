@@ -74,6 +74,10 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
       this.style = options.style;
     }
 
+    if (typeof options.ajaxSource === 'function') {
+      this.ajaxSource = options.ajaxSource;
+    }
+
     this.layerLink = options.layerLink;
 
     this._eventHandlers = {};

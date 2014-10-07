@@ -2,7 +2,7 @@
  * Created by Ryan Whitley, Daniel Duarte, and Nicholas Hallahan
  *    on 6/03/14.
  */
-
+var Util = require('./MVTUtil');
 var StaticLabel = require('./StaticLabel/StaticLabel.js');
 
 module.exports = MVTFeature;
@@ -16,7 +16,7 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
   }
 
   this.mvtLayer = mvtLayer;
-  this.mvtSource = mvtLayer.mvtSource;
+  var mvtSource = this.mvtSource = mvtLayer.mvtSource;
   this.map = mvtLayer.mvtSource._map;
 
   this.id = id;
@@ -46,10 +46,33 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
   if (typeof style.dynamicLabel === 'function') {
     this.dynamicLabel = this.mvtSource.dynamicLabel.createFeature(this);
   }
+
+  if (typeof mvtSource.ajaxSource === 'function') {
+    var ajaxEndpoint = mvtSource.ajaxSource(this);
+    if (ajaxEndpoint) {
+      Util.getJSON(ajaxEndpoint, function(error, response, body) {
+        if (error) {
+          throw ['ajaxSource AJAX Error', error];
+          ajaxCallback(self, null);
+        } else {
+          ajaxCallback(self, response);
+        }
+      });
+    }
+  }
+}
+
+function ajaxCallback(self, response) {
+  self.ajaxData = response;
+  self.setStyle(self.style, self.ajaxData);
+  redrawTiles(self);
 }
 
 MVTFeature.prototype.setStyle = function(styleFn) {
-  this.style = styleFn(this);
+  this.style = styleFn(this, this.ajaxData);
+
+  // The label gets removed, and the (re)draw,
+  // that is initiated by the MVTLayer creates a new label.
   this.removeLabel();
 };
 
@@ -353,3 +376,4 @@ MVTFeature.prototype.linkedFeature = function() {
     return null;
   }
 };
+
