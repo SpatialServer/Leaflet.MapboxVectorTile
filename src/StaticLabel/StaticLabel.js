@@ -87,5 +87,6 @@ StaticLabel.prototype.deselect = function() {
 };
 
 StaticLabel.prototype.remove = function() {
+  if (!this.map || !this.marker) return;
   this.map.removeLayer(this.marker);
 };

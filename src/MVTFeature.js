@@ -64,7 +64,7 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
 
 function ajaxCallback(self, response) {
   self.ajaxData = response;
-  self.setStyle(self.style, self.ajaxData);
+  self.setStyle(self.mvtLayer.style, self.ajaxData);
   redrawTiles(self);
 }
 
