@@ -269,8 +269,16 @@ module.exports = L.TileLayer.Canvas.extend({
     //First, clear the canvas
     this.clearTile(canvasID);
 
+    // If the features are not in the tile, then there is nothing to redraw.
+    // This may happen if you call redraw before features have loaded and initially
+    // drawn the tile.
+    var featfeats = this._canvasIDToFeatures[canvasID];
+    if (!featfeats) {
+      return;
+    }
+
     //Get the features for this tile, and redraw them.
-    var features = this._canvasIDToFeatures[canvasID].features;
+    var features = featfeats.features;
 
     // we want to skip drawing the selected features and draw them last
     var selectedFeatures = [];
