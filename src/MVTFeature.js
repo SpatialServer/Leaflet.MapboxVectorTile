@@ -16,7 +16,7 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
   }
 
   this.mvtLayer = mvtLayer;
-  var mvtSource = this.mvtSource = mvtLayer.mvtSource;
+  this.mvtSource = mvtLayer.mvtSource;
   this.map = mvtLayer.mvtSource._map;
 
   this.id = id;
@@ -47,8 +47,8 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
     this.dynamicLabel = this.mvtSource.dynamicLabel.createFeature(this);
   }
 
-  if (typeof mvtSource.ajaxSource === 'function') {
-    var ajaxEndpoint = mvtSource.ajaxSource(this);
+  if (typeof style.ajaxSource === 'function') {
+    var ajaxEndpoint = style.ajaxSource(this);
     if (ajaxEndpoint) {
       Util.getJSON(ajaxEndpoint, function(error, response, body) {
         if (error) {

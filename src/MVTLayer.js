@@ -36,6 +36,7 @@ module.exports = L.TileLayer.Canvas.extend({
     this._canvasIDToFeatures = {};
     this.features = {};
     this.featuresWithLabels = [];
+    this._highestCount = 0;
   },
 
   onAdd: function(map) {
@@ -170,7 +171,7 @@ module.exports = L.TileLayer.Canvas.extend({
         var style = self.style(vtf);
 
         //create a new feature
-        self.features[uniqueID] = mvtFeature = new MVTFeature(self, vtf, layerCtx, uniqueID, style, this._map);
+        self.features[uniqueID] = mvtFeature = new MVTFeature(self, vtf, layerCtx, uniqueID, style);
         if (typeof style.dynamicLabel === 'function') {
           self.featuresWithLabels.push(mvtFeature);
         }
@@ -200,6 +201,10 @@ module.exports = L.TileLayer.Canvas.extend({
   },
 
   setStyle: function(styleFn) {
+    // refresh the number for the highest count value
+    // this is used only for choropleth
+    this._highestCount = 0;
+
     this.style = styleFn;
     for (var key in this.features) {
       var feat = this.features[key];
@@ -210,6 +215,27 @@ module.exports = L.TileLayer.Canvas.extend({
       var id = z + ':' + key;
       this.redrawTile(id);
     }
+  },
+
+  /**
+   * As counts for choropleths come in with the ajax data,
+   * we want to keep track of which value is the highest
+   * to create the color ramp for the fills of polygons.
+   * @param count
+   */
+  setHighestCount: function(count) {
+    if (count > this._highestCount) {
+      this._highestCount = count;
+    }
+  },
+
+  /**
+   * Returns the highest number of all of the counts that have come in
+   * from setHighestCount. This is assumed to be set via ajax callbacks.
+   * @returns {number}
+   */
+  getHighestCount: function() {
+    return this._highestCount;
   },
 
   //This is the old way.  It works, but is slow for mouseover events.  Fine for click events.

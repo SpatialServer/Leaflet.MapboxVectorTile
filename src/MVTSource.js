@@ -386,14 +386,14 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
           layer.options.filter = filterFunction; //Assign filter to child layer, only if name matches
           //After filter is set, the old feature hashes are invalid.  Clear them for next draw.
           layer.clearLayerFeatureHash();
-          layer.clearTileFeatureHash();
+          //layer.clearTileFeatureHash();
         }
       }
       else{
         layer.options.filter = filterFunction; //Assign filter to child layer
         //After filter is set, the old feature hashes are invalid.  Clear them for next draw.
         layer.clearLayerFeatureHash();
-        layer.clearTileFeatureHash();
+        //layer.clearTileFeatureHash();
       }
     }
   },
