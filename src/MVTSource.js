@@ -40,9 +40,9 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         };
         break;
       case 3: //'Polygon'
-        style.color = fillColor;
+        style.color = 'rgba(49,79,79,1)';
         style.outline = {
-          color: strokeColor,
+          color: 'rgba(161,217,155,0.8)',
           size: 1
         };
         style.selected = {
