@@ -2,7 +2,7 @@
 
 Take a look at the javascript files in the [examples](../examples). You can see a number of working configurations there.
 
-The following are properties that you define an a config object that use use as so:
+The following are properties that define a config object for the `MVTSource` object used as follows:
 
 ```js
 var config = {
@@ -47,10 +47,8 @@ return feature._id;
 },
 ```
 
-* `filter` - **{function}** The filter function gets called when iterating though each vector tile feature (vtf). You have access
-                            to every property associated with a given feature (the feature, and the layer). You can also filter
-                            based of the context (each tile that the feature is drawn onto).
-                            Returning false skips over the feature and it is not drawn. *@param feature* *@returns {boolean}* **Required**.
+* `filter` - **{function}** The filter function gets called when iterating though each vector tile feature (vtf). You have access to every property associated with a given feature (the feature, and the layer). You can also filter based of the context (each tile that the feature is drawn onto). Returning false skips over the feature and it is not drawn. **Required**.   
+  * *@param feature* *@returns {boolean}*
 
 ```js
 filter: function(feature, context) {
@@ -61,7 +59,8 @@ filter: function(feature, context) {
 },
 ```
 
-* `style` - **{function}** This function sets properties that the HTML5 Canvas' context uses to draw on the map. If you do not specify this, default styling will be applied to your features. `style.selected` parameters specify how a feature looks when it is selected. *@returns {object}* **Optional**.
+* `style` - **{function}** This function sets properties that the HTML5 Canvas' context uses to draw on the map. If you do not specify this, default styling will be applied to your features. `style.selected` parameters specify how a feature looks when it is selected. **Optional**.
+  * *@returns {object}* 
 
 ```js
 style: function (feature) {
@@ -123,9 +122,11 @@ style: function (feature) {
 ```
 
 * `layerLink` - **{function}**  When we want to link events between layers, like clicking on a label and a
-                                corresponding polygon freature, this will return the corresponding mapping
+                                corresponding polygon feature, this will return the corresponding mapping
                                 between layers. This provides knowledge of which other feature a given feature
-                                is linked to. *@param layerName* - the layer we want to know the linked layer from, *@returns {string}* - returns corresponding linked layer. **Optional**.
+                                is linked to. **Optional**.
+  * *@param layerName* - the layer we want to know the linked layer from
+  * *@returns {string}* - returns corresponding linked layer.
 
 ```js
 layerLink: function(layerName) {
