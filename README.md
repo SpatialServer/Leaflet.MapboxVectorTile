@@ -43,7 +43,7 @@ var config = {
   ...
 };
 
-var mvtSource = new L.TileLayer(config);
+var mvtSource = new L.TileLayer.MVTSource(config);
 map.addLayer(mvtSource);
 ```
 
