@@ -280,7 +280,14 @@ MVTFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
 
   var ctx2d = ctx.canvas.getContext('2d');
   var outline = style.outline;
-  ctx2d.fillStyle = style.color;
+
+  // color may be defined via function to make choropleth work right
+  if (typeof style.color === 'function') {
+    ctx2d.fillStyle = style.color();
+  } else {
+    ctx2d.fillStyle = style.color;
+  }
+
   if (outline) {
     ctx2d.strokeStyle = outline.color;
     ctx2d.lineWidth = outline.size;
