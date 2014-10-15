@@ -136,3 +136,12 @@ layerLink: function(layerName) {
   return layerName + '_label';
 }
 ```
+
+* 'onClick' - **{function}** This callback is fired every time a layer in clickableLayers is clicked on.
+  * *@param event* - the event that initiated the click. This event object is the Leaflet event along with the feature object.
+
+```js
+onClick: function(evt) {
+  console.log('click');
+}
+```
