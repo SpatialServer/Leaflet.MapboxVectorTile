@@ -17,7 +17,7 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
 
   this.mvtLayer = mvtLayer;
   this.mvtSource = mvtLayer.mvtSource;
-  this.map = mvtLayer.mvtSource._map;
+  this.map = mvtLayer.mvtSource.map;
 
   this.id = id;
 
@@ -47,33 +47,51 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
     this.dynamicLabel = this.mvtSource.dynamicLabel.createFeature(this);
   }
 
+  ajax(self);
+}
+
+
+function ajax(self) {
+  var style = self.style;
   if (typeof style.ajaxSource === 'function') {
-    var ajaxEndpoint = style.ajaxSource(this);
+    var ajaxEndpoint = style.ajaxSource(self);
     if (ajaxEndpoint) {
       Util.getJSON(ajaxEndpoint, function(error, response, body) {
         if (error) {
           throw ['ajaxSource AJAX Error', error];
-          ajaxCallback(self, null);
         } else {
           ajaxCallback(self, response);
+          return true;
         }
       });
     }
   }
+  return false;
 }
 
 function ajaxCallback(self, response) {
   self.ajaxData = response;
-  self.setStyle(self.mvtLayer.style, self.ajaxData);
+  self._setStyle(self.mvtLayer.style);
   redrawTiles(self);
 }
 
-MVTFeature.prototype.setStyle = function(styleFn) {
+MVTFeature.prototype._setStyle = function(styleFn) {
   this.style = styleFn(this, this.ajaxData);
 
   // The label gets removed, and the (re)draw,
   // that is initiated by the MVTLayer creates a new label.
   this.removeLabel();
+};
+
+MVTFeature.prototype.setStyle = function(styleFn) {
+  this.ajaxData = null;
+  this.style = styleFn(this, null);
+  var hasAjaxSource = ajax(this);
+  if (!hasAjaxSource) {
+    // The label gets removed, and the (re)draw,
+    // that is initiated by the MVTLayer creates a new label.
+    this.removeLabel();
+  }
 };
 
 MVTFeature.prototype.draw = function(canvasID) {
@@ -101,6 +119,9 @@ MVTFeature.prototype.draw = function(canvasID) {
     case 1: //Point
       this._drawPoint(ctx, vtf.coordinates, style);
       if (!this.staticLabel && typeof this.style.staticLabel === 'function') {
+        if (this.style.ajaxSource && !this.ajaxData) {
+          break;
+        }
         this._drawStaticLabel(ctx, vtf.coordinates, style);
       }
       break;
@@ -168,8 +189,12 @@ function redrawTiles(self) {
   var mvtLayer = self.mvtLayer;
 
   for (var id in tiles) {
-    //Redraw the tile
-    mvtLayer.redrawTile(id);
+    var tileZoom = parseInt(id.split(':')[0]);
+    var mapZoom = self.map.getZoom();
+    if (tileZoom === mapZoom) {
+      //Redraw the tile
+      mvtLayer.redrawTile(id);
+    }
   }
 }
 
@@ -326,6 +351,10 @@ MVTFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
 
 MVTFeature.prototype._drawStaticLabel = function(ctx, coordsArray, style) {
   if (!style) return;
+
+  // If the corresponding layer is not on the map, 
+  // we dont want to put on a label.
+  if (!this.mvtLayer._map) return;
 
   var vecPt = this._tilePoint(coordsArray[0][0]);
 

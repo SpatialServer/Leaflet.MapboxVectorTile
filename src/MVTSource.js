@@ -430,6 +430,9 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   },
 
   featureDeselected: function(mvtFeature) {
+    if (this.options.mutexToggle && this._selectedFeature) {
+      this._selectedFeature = null;
+    }
     if (this.options.onDeselect) {
       this.options.onDeselect(mvtFeature);
     }

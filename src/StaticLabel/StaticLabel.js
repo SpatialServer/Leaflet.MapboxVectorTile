@@ -20,24 +20,11 @@ function StaticLabel(mvtFeature, ctx, latLng, style) {
     }
   }
 
-  if (typeof style.ajaxSource === 'function') {
-    var ajaxEndpoint = style.ajaxSource(mvtFeature);
-    Util.getJSON(ajaxEndpoint, function(error, response, body) {
-      if (error) {
-        throw ['StaticLabel AJAX Error', error];
-        init(self, mvtFeature, ctx, latLng, style, null);
-      } else {
-        init(self, mvtFeature, ctx, latLng, style, response);
-      }
-
-    });
-  } else {
-    init(self, mvtFeature, ctx, latLng, style, null);
-  }
-
+  init(self, mvtFeature, ctx, latLng, style)
 }
 
-function init(self, mvtFeature, ctx, latLng, style, ajaxData) {
+function init(self, mvtFeature, ctx, latLng, style) {
+  var ajaxData = mvtFeature.ajaxData;
   var sty = self.style = style.staticLabel(mvtFeature, ajaxData);
   var icon = self.icon = L.divIcon({
     className: sty.cssClass || 'label-icon-text',
