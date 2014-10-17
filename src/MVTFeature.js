@@ -71,6 +71,21 @@ function ajax(self) {
 
 function ajaxCallback(self, response) {
   self.ajaxData = response;
+
+  /**
+   * You can attach a callback function to a feature in your app
+   * that will get called whenever new ajaxData comes in. This
+   * can be used to update UI that looks at data from within a feature.
+   *
+   * setStyle may possibly have a style with a different ajaxData source,
+   * and you would potentially get new contextual data for your feature.
+   *
+   * TODO: This needs to be documented.
+   */
+  if (typeof self.ajaxDataReceived === 'function') {
+    self.ajaxDataReceived(self, response);
+  }
+
   self._setStyle(self.mvtLayer.style);
   redrawTiles(self);
 }
