@@ -238,6 +238,21 @@ module.exports = L.TileLayer.Canvas.extend({
     return this._highestCount;
   },
 
+  setLowestCount: function(count) {
+    if (!this._lowestCount || count < this._lowestCount) {
+      this._lowestCount = count;
+    }
+  },
+
+  getLowestCount: function() {
+    return this._lowestCount;
+  },
+
+  setCountRange: function(count) {
+    this.setHighestCount(count);
+    this.setLowestCount(count);
+  },
+
   //This is the old way.  It works, but is slow for mouseover events.  Fine for click events.
   handleClickEvent: function(evt, cb) {
     //Click happened on the GroupLayer (Manager) and passed it here
