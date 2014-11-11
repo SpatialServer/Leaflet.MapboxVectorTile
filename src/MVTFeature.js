@@ -247,6 +247,7 @@ MVTFeature.prototype.on = function(eventType, callback) {
 
 MVTFeature.prototype._drawPoint = function(ctx, coordsArray, style) {
   if (!style) return;
+  if (!ctx || !ctx.canvas) return;
 
   var tile = this.tiles[ctx.id];
 
@@ -288,6 +289,7 @@ MVTFeature.prototype._drawPoint = function(ctx, coordsArray, style) {
 
 MVTFeature.prototype._drawLineString = function(ctx, coordsArray, style) {
   if (!style) return;
+  if (!ctx || !ctx.canvas) return;
 
   var ctx2d = ctx.canvas.getContext('2d');
   ctx2d.strokeStyle = style.color;
@@ -316,7 +318,7 @@ MVTFeature.prototype._drawLineString = function(ctx, coordsArray, style) {
 
 MVTFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
   if (!style) return;
-  if (!ctx.canvas) return;
+  if (!ctx || !ctx.canvas) return;
 
   var ctx2d = ctx.canvas.getContext('2d');
   var outline = style.outline;
@@ -366,6 +368,7 @@ MVTFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
 
 MVTFeature.prototype._drawStaticLabel = function(ctx, coordsArray, style) {
   if (!style) return;
+  if (!ctx) return;
 
   // If the corresponding layer is not on the map, 
   // we dont want to put on a label.
