@@ -269,15 +269,21 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
       getIDForLayerFeature = Util.getIDForLayerFeature;
     }
 
+    var options = {
+      getIDForLayerFeature: getIDForLayerFeature,
+      filter: self.options.filter,
+      layerOrdering: self.options.layerOrdering,
+      style: self.style,
+      name: key,
+      asynch: true
+    };
+
+    if (self.options.zIndex) {
+      options.zIndex = self.options.zIndex;
+    }
+
     //Take the layer and create a new MVTLayer or MVTPointLayer if one doesn't exist.
-    var layer = new MVTLayer(self, {
-        getIDForLayerFeature: getIDForLayerFeature,
-        filter: self.options.filter,
-        layerOrdering: self.options.layerOrdering,
-        style: self.style,
-        name: key,
-        asynch: true
-      }).addTo(self.map);
+    var layer = new MVTLayer(self, options).addTo(self.map);
 
     return layer;
   },
