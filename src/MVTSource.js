@@ -375,14 +375,14 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         if (layer) {
           layer.handleClickEvent(evt, function(evt) {
             if (typeof onClick === 'function') {
-              onClick.call(evt, self.options.scope || window);
+              onClick(evt);
             }
           });
         }
       }
     } else {
       if (typeof onClick === 'function') {
-        onClick.call(evt, self.options.scope || window);
+        onClick(evt);
       }
     }
 
