@@ -11,7 +11,8 @@ module.exports = L.TileLayer.Canvas.extend({
     debug: false,
     isHiddenLayer: false,
     getIDForLayerFeature: function() {},
-    tileSize: 256
+    tileSize: 256,
+    lineClickTolerance: 2
   },
 
   _featureIsClicked: {},
@@ -24,6 +25,36 @@ module.exports = L.TileLayer.Canvas.extend({
         && (c = !c);
       return c;
     }
+  },
+
+  _getDistanceFromLine: function(pt, pts) {
+    var min = Number.POSITIVE_INFINITY;
+    if (pts && pts.length > 1) {
+      pt = L.point(pt.x, pt.y);
+      for (var i = 0, l = pts.length - 1; i < l; i++) {
+        var test = this._projectPointOnLineSegment(pt, pts[i], pts[i + 1]);
+        if (test.distance <= min) {
+          min = test.distance;
+        }
+      }
+    }
+    return min;
+  },
+
+  _projectPointOnLineSegment: function(p, r0, r1) {
+    var lineLength = r0.distanceTo(r1);
+    if (lineLength < 1) {
+        return {distance: p.distanceTo(r0), coordinate: r0};
+    }
+    var u = ((p.x - r0.x) * (r1.x - r0.x) + (p.y - r0.y) * (r1.y - r0.y)) / Math.pow(lineLength, 2);
+    if (u < 0.0000001) {
+        return {distance: p.distanceTo(r0), coordinate: r0};
+    }
+    if (u > 0.9999999) {
+        return {distance: p.distanceTo(r1), coordinate: r1};
+    }
+    var a = L.point(r0.x + u * (r1.x - r0.x), r0.y + u * (r1.y - r0.y));
+    return {distance: p.distanceTo(a), point: a};
   },
 
   initialize: function(mvtSource, options) {
@@ -267,23 +298,45 @@ module.exports = L.TileLayer.Canvas.extend({
 
     var tilePoint = {x: x, y: y};
     var features = this._canvasIDToFeatures[evt.tileID].features;
+
+    var minDistance = Number.POSITIVE_INFINITY;
+    var nearest = null;
+    var j, paths, distance;
+
     for (var i = 0; i < features.length; i++) {
       var feature = features[i];
-      var paths = feature.getPathsForTile(evt.tileID);
-      for (var j = 0; j < paths.length; j++) {
-        if (this._isPointInPoly(tilePoint, paths[j])) {
-          if (feature.toggleEnabled) {
-            feature.toggle();
+      switch (feature.type) {
+        case 2: //LineString
+          paths = feature.getPathsForTile(evt.tileID);
+          for (j = 0; j < paths.length; j++) {
+            if (feature.style) {
+              var distance = this._getDistanceFromLine(tilePoint, paths[j]);
+              var thickness = (feature.selected && feature.style.selected ? feature.style.selected.size : feature.style.size);
+              if (distance < thickness / 2 + this.options.lineClickTolerance && distance < minDistance) {
+                nearest = feature;
+                minDistance = distance;
+              }
+            }
           }
-          evt.feature = feature;
-          cb(evt);
-          return;
-        }
+          break;
+
+        case 3: //Polygon
+          paths = feature.getPathsForTile(evt.tileID);
+          for (j = 0; j < paths.length; j++) {
+            if (this._isPointInPoly(tilePoint, paths[j])) {
+              nearest = feature;
+              minDistance = 0; // point is inside the polygon, so distance is zero
+            }
+          }
+          break;
       }
+      if (minDistance == 0) break;
     }
-    //no match
-    //return evt with empty feature
-    evt.feature = null;
+
+    if (nearest && nearest.toggleEnabled) {
+        nearest.toggle();
+    }
+    evt.feature = nearest;
     cb(evt);
   },
 

@@ -145,3 +145,5 @@ onClick: function(evt) {
   console.log('click');
 }
 ```
+
+* 'scope' - **{object}** The execution context for the onClick callback
