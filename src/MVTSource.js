@@ -70,6 +70,15 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     // thats that have been loaded and drawn
     this.loadedTiles = {};
 
+    /**
+     * For some reason, Leaflet has some code that resets the
+     * z index in the options object. I'm having trouble tracking
+     * down exactly what does this and why, so for now, we should
+     * just copy the value to this.zIndex so we can have the right
+     * number when we make the subsequent MVTLayers.
+     */
+    this.zIndex = options.zIndex;
+
     if (typeof options.style === 'function') {
       this.style = options.style;
     }
@@ -279,7 +288,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     };
 
     if (self.options.zIndex) {
-      options.zIndex = self.options.zIndex;
+      options.zIndex = self.zIndex;
     }
 
     //Take the layer and create a new MVTLayer or MVTPointLayer if one doesn't exist.

@@ -205,6 +205,9 @@ module.exports = L.TileLayer.Canvas.extend({
     // this is used only for choropleth
     this._highestCount = 0;
 
+    // lowest count should not be 0, since we want to figure out the lowest
+    this._lowestCount = null;
+
     this.style = styleFn;
     for (var key in this.features) {
       var feat = this.features[key];
