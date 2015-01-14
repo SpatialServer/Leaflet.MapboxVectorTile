@@ -53,7 +53,7 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
 
 function ajax(self) {
   var style = self.style;
-  if (typeof style.ajaxSource === 'function') {
+  if (style && style.ajaxSource && typeof style.ajaxSource === 'function') {
     var ajaxEndpoint = style.ajaxSource(self);
     if (ajaxEndpoint) {
       Util.getJSON(ajaxEndpoint, function(error, response, body) {
