@@ -378,6 +378,11 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
     // We must have an array of clickable layers, otherwise, we just pass
     // the event to the public onClick callback in options.
+
+    if(!clickableLayers){
+      clickableLayers = Object.keys(self.layers);
+    }
+
     if (clickableLayers && clickableLayers.length > 0) {
       for (var i = 0, len = clickableLayers.length; i < len; i++) {
         var key = clickableLayers[i];
