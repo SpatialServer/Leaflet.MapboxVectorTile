@@ -17,6 +17,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   layers: {}, //Keep a list of the layers contained in the PBFs
   processedTiles: {}, //Keep a list of tiles that have been processed already
   _eventHandlers: {},
+  _triggerOnTilesLoadedEvent: true, //whether or not to fire the onTilesLoaded event when all of the tiles finish loading.
 
   style: function(feature) {
     var style = {};
@@ -92,6 +93,15 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     this._eventHandlers = {};
 
     this._tilesToProcess = 0; //store the max number of tiles to be loaded.  Later, we can use this count to count down PBF loading.
+  },
+
+  redraw: function(triggerOnTilesLoadedEvent){
+    //Only set to false if it actually is passed in as 'false'
+    if (triggerOnTilesLoadedEvent === false) {
+      this._triggerOnTilesLoadedEvent = false;
+    }
+
+    L.TileLayer.Canvas.prototype.redraw.call(this);
   },
 
   onAdd: function(map) {
@@ -207,6 +217,9 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         self.checkVectorTileLayers(parseVT(vt), ctx);
         tileLoaded(self, ctx);
       }
+
+      //either way, reduce the count of tilesToProcess tiles here
+      self.reduceTilesToProcessCount();
     };
 
     xhr.onerror = function() {
@@ -216,9 +229,6 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     xhr.open('GET', url, true); //async is true
     xhr.responseType = 'arraybuffer';
     xhr.send();
-
-    //either way, reduce the count of tilesToProcess tiles here
-    self.reduceTilesToProcessCount();
   },
 
   reduceTilesToProcessCount: function(){
@@ -451,14 +461,22 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     if (this.options.onDeselect) {
       this.options.onDeselect(mvtFeature);
     }
-  }
-,
+  },
 
-  _pbfLoaded: function(){
+  _pbfLoaded: function() {
     //Fires when all tiles from this layer have been loaded and drawn (or 404'd).
 
     //Make sure manager layer is always in front
     this.bringToFront();
+
+    //See if there is an event to execute
+    var self = this;
+    var onTilesLoaded = self.options.onTilesLoaded;
+
+    if (onTilesLoaded && typeof onTilesLoaded === 'function' && this._triggerOnTilesLoadedEvent === true) {
+      onTilesLoaded(this);
+    }
+    self._triggerOnTilesLoadedEvent = true; //reset - if redraw() is called with the optinal 'false' parameter to temporarily disable the onTilesLoaded event from firing.  This resets it back to true after a single time of firing as 'false'.
   }
 
 });
