@@ -43,7 +43,7 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
     self.staticLabel = null;
   });
 
-  if (typeof style.dynamicLabel === 'function') {
+  if (style && style.dynamicLabel && typeof style.dynamicLabel === 'function') {
     this.dynamicLabel = this.mvtSource.dynamicLabel.createFeature(this);
   }
 
