@@ -6,6 +6,10 @@ Leaflet.MapboxVectorTile
 
 A Leaflet Plugin that renders Mapbox Vector Tiles on HTML5 Canvas.
 
+Though there is extensive use of MapboxVectorTiles in Mapnik PNG tile rendering as well as MapboxGL, there is a strange lacking of libraries that integrate these vector tiles directly into Leaflet. Search no more, the library you have been looking for is here!
+
+Take a look at this [short presentation](https://speakerdeck.com/hallahan/leaflet-vector-tiles) outlining what MapboxVectorTiles are and how this is integrated in Leaflet.
+
 ## Examples
 
 [Basic Usage](http://spatialserver.github.io/Leaflet.MapboxVectorTile/examples/basic.html)
