@@ -1,25 +1,20 @@
 var debug = {};
 
-var map = L.map('map').setView([25.40,79.409], 6); // Northern India
+var map = L.map('map').setView([47.651737, -122.30754], 16); // University of Washington
 
-L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+L.tileLayer('https://a.tiles.mapbox.com/v3/cugos.jolef8gc/{z}/{x}/{y}.png', {
   maxZoom: 18
 }).addTo(map);
 
 
 var mvtSource = new L.TileLayer.MVTSource({
-  url: "http://spatialserver.spatialdev.com/services/vector-tiles/gaul_fsp_india/{z}/{x}/{y}.pbf",
-  debug: true,
-  clickableLayers: ['gaul_2014_adm1'],
-
-  /**
-   * If you click on a feature, if there is a different
-   * currently selected feature, that gets toggled off.
-   */
-  mutexToggle: true,
-
+  // alternative mapbox web service source, gives lots of 404 errors as mapbox likes to do...
+//  url: "https://a.tiles.mapbox.com/v4/nicholashallahan.43cc7605/{z}/{x}/{y}.vector.pbf?access_token=pk.eyJ1IjoibmljaG9sYXNoYWxsYWhhbiIsImEiOiJ5YWxaRUY0In0.qLtNgKJKXvhm7j5u6ZvDDw",
+  url: "https://a.tiles.mapbox.com/v4/mapbox.mapbox-terrain-v1,mapbox.mapbox-streets-v6-dev/{z}/{x}/{y}.vector.pbf?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6IlhHVkZmaW8ifQ.hAMX5hSW-QnTeRCMAy9A8Q",
+  debug: false,
+  clickableLayers: ['building'],
   getIDForLayerFeature: function(feature) {
-    return feature._id;
+    return feature.id;
   },
 
   /**
@@ -33,10 +28,7 @@ var mvtSource = new L.TileLayer.MVTSource({
    * @returns {boolean}
    */
   filter: function(feature, context) {
-    if (feature.layer.name === 'gaul_2014_adm1' || feature.layer.name === 'gaul_2014_adm1_label') {
-      return true;
-    }
-    return false;
+    return true;
   },
 
   style: function (feature) {
@@ -45,7 +37,7 @@ var mvtSource = new L.TileLayer.MVTSource({
     var type = feature.type;
     switch (type) {
       case 1: //'Point'
-        style.color = 'rgba(49,79,79,1)';
+        style.color = 'rgba(49,79,79,0.2)';
         style.radius = 5;
         style.selected = {
           color: 'rgba(255,255,0,0.5)',
@@ -76,18 +68,12 @@ var mvtSource = new L.TileLayer.MVTSource({
         break;
     }
 
-    if (feature.layer.name === 'gaul_2014_adm1_label') {
-      style.ajaxSource = function(mvtFeature) {
-        var id = mvtFeature.id;
-        return 'http://spatialserver.spatialdev.com/fsp/2014/fsp/aggregations-no-name/' + id + '.json';
-      };
-
-      style.staticLabel = function(mvtFeature, ajaxData) {
+    if (feature.layer.name === 'poi_label') {
+      style.staticLabel = function() {
         var style = {
-          html: ajaxData.total_count,
-          iconSize: [33,33],
-          cssClass: 'label-icon-number',
-          cssSelectedClass: 'label-icon-number-selected'
+          html: feature.properties.name,
+          iconSize: [125,30],
+          cssClass: 'label-icon-text'
         };
         return style;
       };
@@ -110,6 +96,14 @@ var mvtSource = new L.TileLayer.MVTSource({
       return layerName.replace('_label','');
     }
     return layerName + '_label';
+  },
+
+  /**
+   * Callback function that fires whenever a clickable feature is clicked on the map.
+   * @param evt
+   */
+  onClick: function(evt) {
+    console.log('click');
   }
 
 });

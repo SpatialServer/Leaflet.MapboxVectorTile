@@ -11,7 +11,8 @@ module.exports = L.TileLayer.Canvas.extend({
     debug: false,
     isHiddenLayer: false,
     getIDForLayerFeature: function() {},
-    tileSize: 256
+    tileSize: 256,
+    lineClickTolerance: 2
   },
 
   _featureIsClicked: {},
@@ -26,6 +27,36 @@ module.exports = L.TileLayer.Canvas.extend({
     }
   },
 
+  _getDistanceFromLine: function(pt, pts) {
+    var min = Number.POSITIVE_INFINITY;
+    if (pts && pts.length > 1) {
+      pt = L.point(pt.x, pt.y);
+      for (var i = 0, l = pts.length - 1; i < l; i++) {
+        var test = this._projectPointOnLineSegment(pt, pts[i], pts[i + 1]);
+        if (test.distance <= min) {
+          min = test.distance;
+        }
+      }
+    }
+    return min;
+  },
+
+  _projectPointOnLineSegment: function(p, r0, r1) {
+    var lineLength = r0.distanceTo(r1);
+    if (lineLength < 1) {
+        return {distance: p.distanceTo(r0), coordinate: r0};
+    }
+    var u = ((p.x - r0.x) * (r1.x - r0.x) + (p.y - r0.y) * (r1.y - r0.y)) / Math.pow(lineLength, 2);
+    if (u < 0.0000001) {
+        return {distance: p.distanceTo(r0), coordinate: r0};
+    }
+    if (u > 0.9999999) {
+        return {distance: p.distanceTo(r1), coordinate: r1};
+    }
+    var a = L.point(r0.x + u * (r1.x - r0.x), r0.y + u * (r1.y - r0.y));
+    return {distance: p.distanceTo(a), point: a};
+  },
+
   initialize: function(mvtSource, options) {
     var self = this;
     self.mvtSource = mvtSource;
@@ -34,9 +65,9 @@ module.exports = L.TileLayer.Canvas.extend({
     this.style = options.style;
     this.name = options.name;
     this._canvasIDToFeatures = {};
-    this.visible = true;
     this.features = {};
     this.featuresWithLabels = [];
+    this._highestCount = 0;
   },
 
   onAdd: function(map) {
@@ -118,13 +149,19 @@ module.exports = L.TileLayer.Canvas.extend({
   parseVectorTileLayer: function(vtl, ctx) {
     var self = this;
     var tilePoint = ctx.tile;
+    var layerCtx  = { canvas: null, id: ctx.id, tile: ctx.tile, zoom: ctx.zoom, tileSize: ctx.tileSize};
 
     //See if we can pluck the child tile from this PBF tile layer based on the master layer's tile id.
-    ctx.canvas = self._tiles[tilePoint.x + ":" + tilePoint.y];
+    layerCtx.canvas = self._tiles[tilePoint.x + ":" + tilePoint.y];
+
+
 
     //Initialize this tile's feature storage hash, if it hasn't already been created.  Used for when filters are updated, and features are cleared to prepare for a fresh redraw.
-    if (!this._canvasIDToFeatures[ctx.id]) {
-      this._initializeFeaturesHash(ctx);
+    if (!this._canvasIDToFeatures[layerCtx.id]) {
+      this._initializeFeaturesHash(layerCtx);
+    }else{
+      //Clear this tile's previously saved features.
+      this.clearTileFeatureHash(layerCtx.id);
     }
 
     var features = vtl.parsedFeatures;
@@ -138,7 +175,7 @@ module.exports = L.TileLayer.Canvas.extend({
        */
       var filter = self.options.filter;
       if (typeof filter === 'function') {
-        if ( filter(vtf, ctx) === false ) continue;
+        if ( filter(vtf, layerCtx) === false ) continue;
       }
 
       var getIDForLayerFeature;
@@ -156,7 +193,7 @@ module.exports = L.TileLayer.Canvas.extend({
        */
       var layerOrdering = self.options.layerOrdering;
       if (typeof layerOrdering === 'function') {
-        layerOrdering(vtf, ctx); //Applies a custom property to the feature, which is used after we're thru iterating to sort
+        layerOrdering(vtf, layerCtx); //Applies a custom property to the feature, which is used after we're thru iterating to sort
       }
 
       //Create a new MVTFeature if one doesn't already exist for this feature.
@@ -165,17 +202,17 @@ module.exports = L.TileLayer.Canvas.extend({
         var style = self.style(vtf);
 
         //create a new feature
-        self.features[uniqueID] = mvtFeature = new MVTFeature(self, vtf, ctx, uniqueID, style, this._map);
-        if (typeof style.dynamicLabel === 'function') {
+        self.features[uniqueID] = mvtFeature = new MVTFeature(self, vtf, layerCtx, uniqueID, style);
+        if (style && style.dynamicLabel && typeof style.dynamicLabel === 'function') {
           self.featuresWithLabels.push(mvtFeature);
         }
       } else {
         //Add the new part to the existing feature
-        mvtFeature.addTileFeature(vtf, ctx);
+        mvtFeature.addTileFeature(vtf, layerCtx);
       }
 
       //Associate & Save this feature with this tile for later
-      if(ctx && ctx.id) self._canvasIDToFeatures[ctx.id]['features'].push(mvtFeature);
+      if(layerCtx && layerCtx.id) self._canvasIDToFeatures[layerCtx.id]['features'].push(mvtFeature);
 
     }
 
@@ -186,17 +223,68 @@ module.exports = L.TileLayer.Canvas.extend({
     var layerOrdering = self.options.layerOrdering;
     if (layerOrdering) {
       //We've assigned the custom zIndex property when iterating above.  Now just sort.
-      self._canvasIDToFeatures[ctx.id].features = self._canvasIDToFeatures[ctx.id].features.sort(function(a, b) {
+      self._canvasIDToFeatures[layerCtx.id].features = self._canvasIDToFeatures[layerCtx.id].features.sort(function(a, b) {
         return -(b.properties.zIndex - a.properties.zIndex)
       });
     }
 
-    self.redrawTile(ctx.id);
+    self.redrawTile(layerCtx.id);
   },
 
-  // NOTE: a placeholder for a function that, given a feature, returns a style object used to render the feature itself
-  style: function(feature) {
-    // override with your code
+  setStyle: function(styleFn) {
+    // refresh the number for the highest count value
+    // this is used only for choropleth
+    this._highestCount = 0;
+
+    // lowest count should not be 0, since we want to figure out the lowest
+    this._lowestCount = null;
+
+    this.style = styleFn;
+    for (var key in this.features) {
+      var feat = this.features[key];
+      feat.setStyle(styleFn);
+    }
+    var z = this.map.getZoom();
+    for (var key in this._tiles) {
+      var id = z + ':' + key;
+      this.redrawTile(id);
+    }
+  },
+
+  /**
+   * As counts for choropleths come in with the ajax data,
+   * we want to keep track of which value is the highest
+   * to create the color ramp for the fills of polygons.
+   * @param count
+   */
+  setHighestCount: function(count) {
+    if (count > this._highestCount) {
+      this._highestCount = count;
+    }
+  },
+
+  /**
+   * Returns the highest number of all of the counts that have come in
+   * from setHighestCount. This is assumed to be set via ajax callbacks.
+   * @returns {number}
+   */
+  getHighestCount: function() {
+    return this._highestCount;
+  },
+
+  setLowestCount: function(count) {
+    if (!this._lowestCount || count < this._lowestCount) {
+      this._lowestCount = count;
+    }
+  },
+
+  getLowestCount: function() {
+    return this._lowestCount;
+  },
+
+  setCountRange: function(count) {
+    this.setHighestCount(count);
+    this.setLowestCount(count);
   },
 
   //This is the old way.  It works, but is slow for mouseover events.  Fine for click events.
@@ -210,23 +298,45 @@ module.exports = L.TileLayer.Canvas.extend({
 
     var tilePoint = {x: x, y: y};
     var features = this._canvasIDToFeatures[evt.tileID].features;
+
+    var minDistance = Number.POSITIVE_INFINITY;
+    var nearest = null;
+    var j, paths, distance;
+
     for (var i = 0; i < features.length; i++) {
       var feature = features[i];
-      var paths = feature.getPathsForTile(evt.tileID);
-      for (var j = 0; j < paths.length; j++) {
-        if (this._isPointInPoly(tilePoint, paths[j])) {
-          if (feature.toggleEnabled) {
-            feature.toggle();
+      switch (feature.type) {
+        case 2: //LineString
+          paths = feature.getPathsForTile(evt.tileID);
+          for (j = 0; j < paths.length; j++) {
+            if (feature.style) {
+              var distance = this._getDistanceFromLine(tilePoint, paths[j]);
+              var thickness = (feature.selected && feature.style.selected ? feature.style.selected.size : feature.style.size);
+              if (distance < thickness / 2 + this.options.lineClickTolerance && distance < minDistance) {
+                nearest = feature;
+                minDistance = distance;
+              }
+            }
           }
-          evt.feature = feature;
-          cb(evt);
-          return;
-        }
+          break;
+
+        case 3: //Polygon
+          paths = feature.getPathsForTile(evt.tileID);
+          for (j = 0; j < paths.length; j++) {
+            if (this._isPointInPoly(tilePoint, paths[j])) {
+              nearest = feature;
+              minDistance = 0; // point is inside the polygon, so distance is zero
+            }
+          }
+          break;
       }
+      if (minDistance == 0) break;
     }
-    //no match
-    //return evt with empty feature
-    evt.feature = null;
+
+    if (nearest && nearest.toggleEnabled) {
+        nearest.toggle();
+    }
+    evt.feature = nearest;
     cb(evt);
   },
 
@@ -240,22 +350,32 @@ module.exports = L.TileLayer.Canvas.extend({
     }
     var canvas = this._tiles[canvasId];
 
-//  old school way of clearing a canvas
-//    canvas.width = canvas.width;
-
-//  explicit way of clearing a canvas (better perf)
     var context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
   },
 
+  clearTileFeatureHash: function(canvasID){
+    this._canvasIDToFeatures[canvasID] = { features: []}; //Get rid of all saved features
+  },
+
   clearLayerFeatureHash: function(){
-    this._canvasIDToFeatures = {}; //Get rid of all saved features
     this.features = {};
   },
 
   redrawTile: function(canvasID) {
+    //First, clear the canvas
+    this.clearTile(canvasID);
+
+    // If the features are not in the tile, then there is nothing to redraw.
+    // This may happen if you call redraw before features have loaded and initially
+    // drawn the tile.
+    var featfeats = this._canvasIDToFeatures[canvasID];
+    if (!featfeats) {
+      return;
+    }
+
     //Get the features for this tile, and redraw them.
-    var features = this._canvasIDToFeatures[canvasID].features;
+    var features = featfeats.features;
 
     // we want to skip drawing the selected features and draw them last
     var selectedFeatures = [];

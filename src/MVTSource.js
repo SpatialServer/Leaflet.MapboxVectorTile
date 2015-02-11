@@ -10,13 +10,14 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   options: {
     debug: false,
     url: "", //URL TO Vector Tile Source,
-    clickableLayers: [], //which layers inside the vector tile should have click events?
     getIDForLayerFeature: function() {},
-    tileSize: 256
+    tileSize: 256,
+    visibleLayers: []
   },
   layers: {}, //Keep a list of the layers contained in the PBFs
   processedTiles: {}, //Keep a list of tiles that have been processed already
   _eventHandlers: {},
+  _triggerOnTilesLoadedEvent: true, //whether or not to fire the onTilesLoaded event when all of the tiles finish loading.
 
   style: function(feature) {
     var style = {};
@@ -40,9 +41,9 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         };
         break;
       case 3: //'Polygon'
-        style.color = fillColor;
+        style.color = 'rgba(49,79,79,1)';
         style.outline = {
-          color: strokeColor,
+          color: 'rgba(161,217,155,0.8)',
           size: 1
         };
         style.selected = {
@@ -70,8 +71,21 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     // thats that have been loaded and drawn
     this.loadedTiles = {};
 
+    /**
+     * For some reason, Leaflet has some code that resets the
+     * z index in the options object. I'm having trouble tracking
+     * down exactly what does this and why, so for now, we should
+     * just copy the value to this.zIndex so we can have the right
+     * number when we make the subsequent MVTLayers.
+     */
+    this.zIndex = options.zIndex;
+
     if (typeof options.style === 'function') {
       this.style = options.style;
+    }
+
+    if (typeof options.ajaxSource === 'function') {
+      this.ajaxSource = options.ajaxSource;
     }
 
     this.layerLink = options.layerLink;
@@ -79,8 +93,15 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     this._eventHandlers = {};
 
     this._tilesToProcess = 0; //store the max number of tiles to be loaded.  Later, we can use this count to count down PBF loading.
+  },
 
-    this._onClickSet = false;
+  redraw: function(triggerOnTilesLoadedEvent){
+    //Only set to false if it actually is passed in as 'false'
+    if (triggerOnTilesLoadedEvent === false) {
+      this._triggerOnTilesLoadedEvent = false;
+    }
+
+    L.TileLayer.Canvas.prototype.redraw.call(this);
   },
 
   onAdd: function(map) {
@@ -88,20 +109,18 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     self.map = map;
     L.TileLayer.Canvas.prototype.onAdd.call(this, map);
 
-    // if this layer gets readded to the map, the map actually still has the event handler
-    if (!self._onClickSet) {
-      map.on('click', function(e) {
-        self.onClick(e);
-      });
-      self._onClickSet = true;
-    }
+    var mapOnClickCallback = function(e) {
+      self._onClick(e);
+    };
 
+    map.on('click', mapOnClickCallback);
 
     map.on("layerremove", function(e) {
       // check to see if the layer removed is this one
       // call a method to remove the child layers (the ones that actually have something drawn on them).
       if (e.layer._leaflet_id === self._leaflet_id && e.layer.removeChildLayers) {
         e.layer.removeChildLayers(map);
+        map.off('click', mapOnClickCallback);
       }
     });
 
@@ -173,7 +192,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 //    //if we've already parsed it, don't get it again.
 //    if(vectorTile){
 //      console.log("Skipping fetching " + ctx.id);
-//      self.parseVectorTile(parseVT(vectorTile), ctx, true);
+//      self.checkVectorTileLayers(parseVT(vectorTile), ctx, true);
 //      self.reduceTilesToProcessCount();
 //      return;
 //    }
@@ -191,16 +210,16 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         var buf = new Protobuf(arrayBuffer);
         var vt = new VectorTile(buf);
         //Check the current map layer zoom.  If fast zooming is occurring, then short circuit tiles that are for a different zoom level than we're currently on.
-        if(self._map.getZoom() != ctx.zoom) {
+        if(self.map && self.map.getZoom() != ctx.zoom) {
           console.log("Fetched tile for zoom level " + ctx.zoom + ". Map is at zoom level " + self._map.getZoom());
           return;
         }
-        self.parseVectorTile(parseVT(vt), ctx);
+        self.checkVectorTileLayers(parseVT(vt), ctx);
         tileLoaded(self, ctx);
       }
-//      else {
-//        console.log("xhr.status = " + xhr.status);
-//      }
+
+      //either way, reduce the count of tilesToProcess tiles here
+      self.reduceTilesToProcessCount();
     };
 
     xhr.onerror = function() {
@@ -210,9 +229,6 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     xhr.open('GET', url, true); //async is true
     xhr.responseType = 'arraybuffer';
     xhr.send();
-
-    //either way, reduce the count of tilesToProcess tiles here
-    self.reduceTilesToProcessCount();
   },
 
   reduceTilesToProcessCount: function(){
@@ -220,37 +236,46 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     if(!this._tilesToProcess){
       //Trigger event letting us know that all PBFs have been loaded and processed (or 404'd).
       if(this._eventHandlers["PBFLoad"]) this._eventHandlers["PBFLoad"]();
+      this._pbfLoaded();
     }
   },
 
-  parseVectorTile: function(vt, ctx, parsed) {
+  checkVectorTileLayers: function(vt, ctx, parsed) {
     var self = this;
 
-    for (var key in vt.layers) {
-      var lyr = vt.layers[key];
-      if (!self.layers[key]) {
-        //Create MVTLayer or MVTPointLayer for user
-        self.layers[key] = self.createMVTLayer(key, lyr.parsedFeatures[0].type || null);
-      }
-
-      //If layer is marked as visible, examine the contents.
-      if (self.layers[key].visible === true) {
-        if(parsed){
-          //We've already parsed it.  Go get canvas and draw.
-          self.layers[key].getCanvas(ctx, lyr);
-        }else{
-          self.layers[key].parseVectorTileLayer(lyr, ctx);
-
-          //if we have a reasonable amount of features inside, lets store it in memory.  Otherwise, fetch every time to avoid memory pileup.
-          if(lyr.parsedFeatures.length < 25){
-            this.processedTiles[ctx.zoom][ctx.id] = vt;
-          }
+    //Check if there are specified visible layers
+    if(self.options.visibleLayers && self.options.visibleLayers.length > 0){
+      //only let thru the layers listed in the visibleLayers array
+      for(var i=0; i < self.options.visibleLayers.length; i++){
+        var layerName = self.options.visibleLayers[i];
+        if(vt.layers[layerName]){
+           //Proceed with parsing
+          self.prepareMVTLayers(vt.layers[layerName], layerName, ctx, parsed);
         }
       }
+    }else{
+      //Parse all vt.layers
+      for (var key in vt.layers) {
+        self.prepareMVTLayers(vt.layers[key], key, ctx, parsed);
+      }
+    }
+  },
+
+  prepareMVTLayers: function(lyr ,key, ctx, parsed) {
+    var self = this;
+
+    if (!self.layers[key]) {
+      //Create MVTLayer or MVTPointLayer for user
+      self.layers[key] = self.createMVTLayer(key, lyr.parsedFeatures[0].type || null);
     }
 
-    //Make sure manager layer is always in front
-    this.bringToFront();
+    if (parsed) {
+      //We've already parsed it.  Go get canvas and draw.
+      self.layers[key].getCanvas(ctx, lyr);
+    } else {
+      self.layers[key].parseVectorTileLayer(lyr, ctx);
+    }
+
   },
 
   createMVTLayer: function(key, type) {
@@ -263,15 +288,21 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
       getIDForLayerFeature = Util.getIDForLayerFeature;
     }
 
+    var options = {
+      getIDForLayerFeature: getIDForLayerFeature,
+      filter: self.options.filter,
+      layerOrdering: self.options.layerOrdering,
+      style: self.style,
+      name: key,
+      asynch: true
+    };
+
+    if (self.options.zIndex) {
+      options.zIndex = self.zIndex;
+    }
+
     //Take the layer and create a new MVTLayer or MVTPointLayer if one doesn't exist.
-    var layer = new MVTLayer(self, {
-        getIDForLayerFeature: getIDForLayerFeature,
-        filter: self.options.filter,
-        layerOrdering: self.options.layerOrdering,
-        style: self.style,
-        name: key,
-        asynch: true
-      }).addTo(self.map);
+    var layer = new MVTLayer(self, options).addTo(self.map);
 
     return layer;
   },
@@ -283,14 +314,18 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   hideLayer: function(id) {
     if (this.layers[id]) {
       this._map.removeLayer(this.layers[id]);
-      this.layers[id].visible = false;
+      if(this.options.visibleLayers.indexOf("id") > -1){
+        this.visibleLayers.splice(this.options.visibleLayers.indexOf("id"), 1);
+      }
     }
   },
 
   showLayer: function(id) {
     if (this.layers[id]) {
-      this.layers[id].visible = true;
       this._map.addLayer(this.layers[id]);
+      if(this.options.visibleLayers.indexOf("id") == -1){
+        this.visibleLayers.push(id);
+      }
     }
     //Make sure manager layer is always in front
     this.bringToFront();
@@ -305,11 +340,25 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   },
 
   addChildLayers: function(map) {
-    for (var key in this.layers) {
-      var layer = this.layers[key];
-      // layer is set to visible and is not already on map
-      if (layer.visible && !layer._map) {
-        map.addLayer(layer);
+    var self = this;
+    if(self.options.visibleLayers.length > 0){
+      //only let thru the layers listed in the visibleLayers array
+      for(var i=0; i < self.options.visibleLayers.length; i++){
+        var layerName = self.options.visibleLayers[i];
+        var layer = this.layers[layerName];
+        if(layer){
+          //Proceed with parsing
+          map.addLayer(layer);
+        }
+      }
+    }else{
+      //Add all layers
+      for (var key in this.layers) {
+        var layer = this.layers[key];
+        // layer is set to visible and is not already on map
+        if (!layer._map) {
+          map.addLayer(layer);
+        }
       }
     }
   },
@@ -318,33 +367,40 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     this._eventHandlers[eventType] = callback;
   },
 
-  onClick: function(evt, cb) {
+  _onClick: function(evt) {
     //Here, pass the event on to the child MVTLayer and have it do the hit test and handle the result.
     var self = this;
+    var onClick = self.options.onClick;
+    var clickableLayers = self.options.clickableLayers;
+    var layers = self.layers;
 
-    evt.tileID =  getTileURL(evt.latlng.lat, evt.latlng.lng, this._map.getZoom());
+    evt.tileID =  getTileURL(evt.latlng.lat, evt.latlng.lng, this.map.getZoom());
 
-    //If no layer is specified as clickable, just use the 1st one.
-    if(this.options.clickableLayers.length == 0) {
-      var names = Object.keys(self.layers);
-      self.layers[names[0]].handleClickEvent(evt, function (evt) {
-        if (typeof cb === 'function') {
-          cb(evt);
-        }
-      });
+    // We must have an array of clickable layers, otherwise, we just pass
+    // the event to the public onClick callback in options.
+
+    if(!clickableLayers){
+      clickableLayers = Object.keys(self.layers);
     }
-    else{
-      for (var key in this.layers) {
-        var layer = this.layers[key];
-        if(self.options.clickableLayers.indexOf(key) > -1){
+
+    if (clickableLayers && clickableLayers.length > 0) {
+      for (var i = 0, len = clickableLayers.length; i < len; i++) {
+        var key = clickableLayers[i];
+        var layer = layers[key];
+        if (layer) {
           layer.handleClickEvent(evt, function(evt) {
-            if (typeof cb === 'function') {
-              cb(evt);
+            if (typeof onClick === 'function') {
+              onClick(evt);
             }
           });
         }
       }
+    } else {
+      if (typeof onClick === 'function') {
+        onClick(evt);
+      }
     }
+
   },
 
   setFilter: function(filterFunction, layerName) {
@@ -360,17 +416,74 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
           layer.options.filter = filterFunction; //Assign filter to child layer, only if name matches
           //After filter is set, the old feature hashes are invalid.  Clear them for next draw.
           layer.clearLayerFeatureHash();
+          //layer.clearTileFeatureHash();
         }
       }
       else{
         layer.options.filter = filterFunction; //Assign filter to child layer
         //After filter is set, the old feature hashes are invalid.  Clear them for next draw.
         layer.clearLayerFeatureHash();
+        //layer.clearTileFeatureHash();
       }
     }
+  },
 
+  /**
+   * Take in a new style function and propogate to child layers.
+   * If you do not set a layer name, it resets the style for all of the layers.
+   * @param styleFunction
+   * @param layerName
+   */
+  setStyle: function(styleFn, layerName) {
+    for (var key in this.layers) {
+      var layer = this.layers[key];
+      if (layerName) {
+        if(key.toLowerCase() == layerName.toLowerCase()) {
+          layer.setStyle(styleFn);
+        }
+      } else {
+        layer.setStyle(styleFn);
+      }
+    }
+  },
 
+  featureSelected: function(mvtFeature) {
+    if (this.options.mutexToggle) {
+      if (this._selectedFeature) {
+        this._selectedFeature.deselect();
+      }
+      this._selectedFeature = mvtFeature;
+    }
+    if (this.options.onSelect) {
+      this.options.onSelect(mvtFeature);
+    }
+  },
+
+  featureDeselected: function(mvtFeature) {
+    if (this.options.mutexToggle && this._selectedFeature) {
+      this._selectedFeature = null;
+    }
+    if (this.options.onDeselect) {
+      this.options.onDeselect(mvtFeature);
+    }
+  },
+
+  _pbfLoaded: function() {
+    //Fires when all tiles from this layer have been loaded and drawn (or 404'd).
+
+    //Make sure manager layer is always in front
+    this.bringToFront();
+
+    //See if there is an event to execute
+    var self = this;
+    var onTilesLoaded = self.options.onTilesLoaded;
+
+    if (onTilesLoaded && typeof onTilesLoaded === 'function' && this._triggerOnTilesLoadedEvent === true) {
+      onTilesLoaded(this);
+    }
+    self._triggerOnTilesLoadedEvent = true; //reset - if redraw() is called with the optinal 'false' parameter to temporarily disable the onTilesLoaded event from firing.  This resets it back to true after a single time of firing as 'false'.
   }
+
 });
 
 

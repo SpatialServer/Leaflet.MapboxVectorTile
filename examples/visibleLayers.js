@@ -11,13 +11,7 @@ var mvtSource = new L.TileLayer.MVTSource({
   url: "http://spatialserver.spatialdev.com/services/vector-tiles/gaul_fsp_india/{z}/{x}/{y}.pbf",
   debug: true,
   clickableLayers: ['gaul_2014_adm1'],
-
-  /**
-   * If you click on a feature, if there is a different
-   * currently selected feature, that gets toggled off.
-   */
-  mutexToggle: true,
-
+  visibleLayers: ['gaul_2014_adm1'], //ONLY show this layer that's contained inside of these pbfs.
   getIDForLayerFeature: function(feature) {
     return feature._id;
   },
@@ -61,9 +55,9 @@ var mvtSource = new L.TileLayer.MVTSource({
         };
         break;
       case 3: //'Polygon'
-        style.color = 'rgba(149,139,255,0.4)';
+        style.color = fillColor;
         style.outline = {
-          color: 'rgb(20,20,20)',
+          color: strokeColor,
           size: 1
         };
         style.selected = {
@@ -79,7 +73,7 @@ var mvtSource = new L.TileLayer.MVTSource({
     if (feature.layer.name === 'gaul_2014_adm1_label') {
       style.ajaxSource = function(mvtFeature) {
         var id = mvtFeature.id;
-        return 'http://spatialserver.spatialdev.com/fsp/2014/fsp/aggregations-no-name/' + id + '.json';
+        return 'http://localhost:8888/fsp/2014/fsp/aggregations-no-name/' + id + '.json';
       };
 
       style.staticLabel = function(mvtFeature, ajaxData) {
@@ -114,6 +108,10 @@ var mvtSource = new L.TileLayer.MVTSource({
 
 });
 debug.mvtSource = mvtSource;
+
+//Globals that we can change later.
+var fillColor = 'rgba(149,139,255,0.4)';
+var strokeColor = 'rgb(20,20,20)';
 
 //Add layer
 map.addLayer(mvtSource);

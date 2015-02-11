@@ -1,13 +1,4 @@
-var debug = {};
-
-var map = L.map('map').setView([25.40,79.409], 6); // Northern India
-
-L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-  maxZoom: 18
-}).addTo(map);
-
-
-var mvtSource = new L.TileLayer.MVTSource({
+module.exports = {
   url: "http://spatialserver.spatialdev.com/services/vector-tiles/gaul_fsp_india/{z}/{x}/{y}.pbf",
   debug: true,
   clickableLayers: ['gaul_2014_adm1'],
@@ -79,7 +70,7 @@ var mvtSource = new L.TileLayer.MVTSource({
     if (feature.layer.name === 'gaul_2014_adm1_label') {
       style.ajaxSource = function(mvtFeature) {
         var id = mvtFeature.id;
-        return 'http://spatialserver.spatialdev.com/fsp/2014/fsp/aggregations-no-name/' + id + '.json';
+        return 'http://localhost:8888/fsp/2014/fsp/aggregations-no-name/' + id + '.json';
       };
 
       style.staticLabel = function(mvtFeature, ajaxData) {
@@ -112,8 +103,4 @@ var mvtSource = new L.TileLayer.MVTSource({
     return layerName + '_label';
   }
 
-});
-debug.mvtSource = mvtSource;
-
-//Add layer
-map.addLayer(mvtSource);
+};

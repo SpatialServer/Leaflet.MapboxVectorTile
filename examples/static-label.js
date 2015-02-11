@@ -85,14 +85,14 @@ var opts = {
 
     if (feature.layer.name === 'gadm1_label') {
       style.staticLabel = function() {
-        var style = {
-          html: feature.properties.name,
-          iconSize: [125,30],
-          cssClass: 'label-icon-text'
-        };
-        return style;
+      var style = {
+        html: feature.properties.name,
+        iconSize: [125,30],
+        cssClass: 'label-icon-text'
       };
-    }
+      return style;
+    };
+  }
 
     return style;
   }
