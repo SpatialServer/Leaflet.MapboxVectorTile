@@ -18,6 +18,8 @@ Take a look at this [short presentation](https://speakerdeck.com/hallahan/leafle
 
 [Confetti (700k Points)](http://spatialserver.github.io/Leaflet.MapboxVectorTile/examples/confetti.html)
 
+[Fancy Labels Showing Point Aggregations](http://spatialserver.github.io/Leaflet.MapboxVectorTile/examples/india-aggregations.html)
+
 ## Demo Web Application
 
 This library is currently being used in the [India Edition of Financial Services for the Poor](http://fspmaps.com/india). 
