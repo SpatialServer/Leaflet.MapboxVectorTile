@@ -4,8 +4,6 @@
  */
 var Util = module.exports = {};
 
-var request = require('request');
-
 Util.getContextID = function(ctx) {
   return [ctx.zoom, ctx.tile.x, ctx.tile.y].join(":");
 };
@@ -23,14 +21,16 @@ Util.getIDForLayerFeature = function(feature) {
 };
 
 Util.getJSON = function(url, callback) {
-  request(url, function(error, response, body) {
-    if (!error && response.statusCode >= 200 && response.statusCode < 300) {
-      var data;
-      try { data = JSON.parse(body); }
-      catch (err) { return callback(err); }
-      callback(null, data);
+  var xmlhttp = typeof XMLHttpRequest !== 'undefined' ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
+  xmlhttp.onreadystatechange = function() {
+    var status = xmlhttp.status;
+    if (xmlhttp.readyState === 4 && status >= 200 && status < 300) {
+      var json = JSON.parse(xmlhttp.responseText);
+      callback(null, json);
     } else {
-      callback(error || new Error(response.statusCode));
+      callback( { error: true, status: status } );
     }
-  });
+  };
+  xmlhttp.open("GET", url, true);
+  xmlhttp.send();
 };
