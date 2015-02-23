@@ -325,7 +325,7 @@ MVTFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
 
   // color may be defined via function to make choropleth work right
   if (typeof style.color === 'function') {
-    ctx2d.fillStyle = style.color();
+    ctx2d.fillStyle = style.color(ctx2d);
   } else {
     ctx2d.fillStyle = style.color;
   }
