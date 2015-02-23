@@ -6,6 +6,10 @@ Leaflet.MapboxVectorTile
 
 A Leaflet Plugin that renders Mapbox Vector Tiles on HTML5 Canvas.
 
+Though there is extensive use of MapboxVectorTiles in Mapnik PNG tile rendering as well as MapboxGL, there is a strange lacking of libraries that integrate these vector tiles directly into Leaflet. Search no more, the library you have been looking for is here!
+
+Take a look at this [short presentation](https://speakerdeck.com/hallahan/leaflet-vector-tiles) outlining what MapboxVectorTiles are and how this is integrated in Leaflet.
+
 ## Examples
 
 [Basic Usage](http://spatialserver.github.io/Leaflet.MapboxVectorTile/examples/basic.html)
@@ -13,6 +17,14 @@ A Leaflet Plugin that renders Mapbox Vector Tiles on HTML5 Canvas.
 [Statically Placed Labels](http://spatialserver.github.io/Leaflet.MapboxVectorTile/examples/static-label.html)
 
 [Confetti (700k Points)](http://spatialserver.github.io/Leaflet.MapboxVectorTile/examples/confetti.html)
+
+[Fancy Labels Showing Point Aggregations](http://spatialserver.github.io/Leaflet.MapboxVectorTile/examples/india-aggregations.html)
+
+## Demo Web Application
+
+This library is currently being used in the [India Edition of Financial Services for the Poor](http://fspmaps.com/india). 
+
+Tiles are being served by [SpatialServer (PGRestAPI)](https://github.com/spatialdev/PGRestAPI).
 
 ## Getting Started
 
