@@ -306,6 +306,18 @@ module.exports = L.TileLayer.Canvas.extend({
     for (var i = 0; i < features.length; i++) {
       var feature = features[i];
       switch (feature.type) {
+
+        case 1: //Point - currently rendered as circular paths.  Intersect with that.
+          paths = feature.getPathsForTile(evt.tileID);
+          for (j = 0; j < paths.length; j++) {
+            //Builds a circle of radius feature.style.radius (assuming circular point symbology).
+            if(in_circle(paths[j][0].x, paths[j][0].y, feature.style.radius, x, y)){
+              nearest = feature;
+              minDistance = 0;
+            }
+          }
+          break;
+
         case 2: //LineString
           paths = feature.getPathsForTile(evt.tileID);
           for (j = 0; j < paths.length; j++) {
@@ -431,7 +443,10 @@ function removeLabels(self) {
   self.featuresWithLabels = [];
 }
 
-
+function in_circle(center_x, center_y, radius, x, y) {
+  var square_dist = Math.pow((center_x - x), 2) + Math.pow((center_y - y), 2);
+  return square_dist <= Math.pow(radius, 2);
+}
 /**
  * See https://github.com/ariya/phantomjs/blob/master/examples/waitfor.js
  *
