@@ -15,8 +15,10 @@ Take a look at this [short presentation](https://speakerdeck.com/hallahan/leafle
 
 ### v 0.1.5 - May 21, 2015
 *  Added point onClick events
-*  Click function uses style.radius or radius function to do hittest.
 
+
+### v 0.1.6 - May 26, 2015
+*  Click function uses style.radius or radius function to do hittest.
 
 ## Examples
 
