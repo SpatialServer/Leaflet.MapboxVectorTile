@@ -291,6 +291,7 @@ module.exports = L.TileLayer.Canvas.extend({
   handleClickEvent: function(evt, cb) {
     //Click happened on the GroupLayer (Manager) and passed it here
     var tileID = evt.tileID.split(":").slice(1, 3).join(":");
+    var zoom = evt.tileID.split(":")[0];
     var canvas = this._tiles[tileID];
     if(!canvas) (cb(evt)); //break out
     var x = evt.layerPoint.x - canvas._leaflet_pos.x;
@@ -308,10 +309,20 @@ module.exports = L.TileLayer.Canvas.extend({
       switch (feature.type) {
 
         case 1: //Point - currently rendered as circular paths.  Intersect with that.
+
+          //Find the radius of the point.
+          var radius = 3;
+          if (typeof feature.style.radius === 'function') {
+            radius = feature.style.radius(zoom); //Allows for scale dependent rednering
+          }
+          else{
+            radius = feature.style.radius;
+          }
+
           paths = feature.getPathsForTile(evt.tileID);
           for (j = 0; j < paths.length; j++) {
             //Builds a circle of radius feature.style.radius (assuming circular point symbology).
-            if(in_circle(paths[j][0].x, paths[j][0].y, feature.style.radius, x, y)){
+            if(in_circle(paths[j][0].x, paths[j][0].y, radius, x, y)){
               nearest = feature;
               minDistance = 0;
             }

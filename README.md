@@ -10,6 +10,14 @@ Though there is extensive use of MapboxVectorTiles in Mapnik PNG tile rendering 
 
 Take a look at this [short presentation](https://speakerdeck.com/hallahan/leaflet-vector-tiles) outlining what MapboxVectorTiles are and how this is integrated in Leaflet.
 
+
+##Changelog
+
+### v 0.1.5 - May 21, 2015
+*  Added point onClick events
+*  Click function uses style.radius or radius function to do hittest.
+
+
 ## Examples
 
 [Basic Usage](http://spatialserver.github.io/Leaflet.MapboxVectorTile/examples/basic.html)
