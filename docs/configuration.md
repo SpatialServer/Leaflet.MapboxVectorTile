@@ -47,6 +47,14 @@ return feature._id;
 },
 ```
 
+* `bustCache` - **{boolean}** If true, a timestamp will be appended to the end of the tile URL as a querystring parameter.  Not recommended unless you REALLY want to bust that cache.  If possible, set the appropriate headers on your tile server instead. ***Default: `false`***.
+
+```js
+getIDForLayerFeature: function(feature) {
+return feature._id;
+},
+```
+
 * `filter` - **{function}** The filter function gets called when iterating though each vector tile feature (vtf). You have access to every property associated with a given feature (the feature, and the layer). You can also filter based of the context (each tile that the feature is drawn onto). Returning false skips over the feature and it is not drawn. **Required**.   
   * *@param feature* *@returns {boolean}*
 

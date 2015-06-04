@@ -12,13 +12,16 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     url: "", //URL TO Vector Tile Source,
     getIDForLayerFeature: function() {},
     tileSize: 256,
-    visibleLayers: []
+    visibleLayers: [],
+    bustCache: false //if true, append a cache-busting querystring to the tile call to prevent browser caching of tiles
   },
   layers: {}, //Keep a list of the layers contained in the PBFs
   processedTiles: {}, //Keep a list of tiles that have been processed already
   _eventHandlers: {},
   _triggerOnTilesLoadedEvent: true, //whether or not to fire the onTilesLoaded event when all of the tiles finish loading.
   _url: "", //internal URL property
+  _isDrawing: false, //Store whether we're currently drawing tiles.  Used for interrupt of draw if multiple redraws are called back to back
+  _cancelCurrentDraw: false, //if true, stop drawing
 
   style: function(feature) {
     var style = {};
@@ -104,7 +107,15 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
       this._triggerOnTilesLoadedEvent = false;
     }
 
-    L.TileLayer.Canvas.prototype.redraw.call(this);
+    if(this._isDrawing === true){
+      //Cancel previous request.  When done, fire off redraw internally.
+      this._cancelCurrentDraw = true;
+      console.log("Cancelled latest refresh call.");
+    }
+    else{
+      L.TileLayer.Canvas.prototype.redraw.call(this);
+    }
+
   },
 
   onAdd: function(map) {
@@ -136,6 +147,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   },
 
   drawTile: function(canvas, tilePoint, zoom) {
+
     var ctx = {
       id: [zoom, tilePoint.x, tilePoint.y].join(":"),
       canvas: canvas,
@@ -147,6 +159,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     //Capture the max number of the tiles to load here. this._tilesToProcess is an internal number we use to know when we've finished requesting PBFs.
     if(this._tilesToProcess < this._tilesToLoad) this._tilesToProcess = this._tilesToLoad;
 
+
     var id = ctx.id = Util.getContextID(ctx);
     this.activeTiles[id] = ctx;
 
@@ -155,6 +168,10 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     if (this.options.debug) {
       this._drawDebugInfo(ctx);
     }
+
+    //Set flag to know we're drawing
+    this._isDrawing = true;
+
     this._draw(ctx);
   },
 
@@ -202,6 +219,13 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
     if (!this._url) return;
     var src = this.getTileUrl({ x: ctx.tile.x, y: ctx.tile.y, z: ctx.zoom });
+
+    //Add dymamic querystring to break cache if requested
+    if(this.options.bustCache === true) {
+      var t = new Date().getTime();
+      src += ( src.indexOf("?") > -1 ? "&ts=" + t : "?ts=" + t);
+      console.log("appended t querystring to bust cache");
+    }
 
     var xhr = new XMLHttpRequest();
     xhr.onload = function() {
@@ -473,6 +497,21 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
   _pbfLoaded: function() {
     //Fires when all tiles from this layer have been loaded and drawn (or 404'd).
+
+    this._isDrawing = false;
+
+    //redraw if requested multiple times
+    if(this._cancelCurrentDraw === true) {
+
+      console.log("Redraw about to fire AGAIN!");
+
+      // //Reset interrupt
+      this._cancelCurrentDraw = false;
+
+      //call to redraw now that we're unclogged
+      L.TileLayer.Canvas.prototype.redraw.call(this);
+
+    }
 
     //Make sure manager layer is always in front
     this.bringToFront();

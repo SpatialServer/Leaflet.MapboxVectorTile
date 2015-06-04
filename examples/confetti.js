@@ -15,6 +15,7 @@ var pbfSource = new L.TileLayer.MVTSource({
   url: "http://spatialserver.spatialdev.com/services/postgis/cicos_2014/geom/vector-tiles/{z}/{x}/{y}.pbf?fields=type,id",
   debug: false,
   clickableLayers: null,
+  //bustCache: true,
 
   getIDForLayerFeature: function(feature) {
     return feature.properties.id;

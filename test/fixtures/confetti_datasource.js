@@ -1,6 +1,6 @@
 module.exports = {
-  url: "http://spatialserver.spatialdev.com/services/postgis/cicos_2014/geom/vector-tiles/{z}/{x}/{y}.pbf?fields=type,id", //Original Datasource - this is dynamic data, tho
-  //url: "http://localhost/Leaflet.MapboxVectorTile/test/fixtures/pbfs/{z}.{x}.{y}.pbf",
+  //url: "http://spatialserver.spatialdev.com/services/postgis/cicos_2014/geom/vector-tiles/{z}/{x}/{y}.pbf?fields=type,id", //Original Datasource - this is dynamic data, tho
+  url: "./test/fixtures/pbfs/cicos_2014/{z}/{x}/{y}.pbf",
   debug: true,
   clickableLayers: [''],
 
@@ -30,9 +30,9 @@ module.exports = {
    */
   layerOrdering: function (feature) {
     //This only needs to be done for each type, not necessarily for each feature. But we'll start here.
-    if (feature && feature.properties) {
-      feature.properties.zIndex =  5;
-    }
+    //if (feature && feature.properties) {
+    //  feature.properties.zIndex =  5;
+    //}
   },
 
   style: function (feature) {
