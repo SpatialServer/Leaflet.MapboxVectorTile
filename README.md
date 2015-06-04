@@ -13,12 +13,18 @@ Take a look at this [short presentation](https://speakerdeck.com/hallahan/leafle
 
 ##Changelog
 
+### master-interrupt branch June 4th, 2015
+*  redraw() now waits for previous drawing to finish, and then calls redraw() internally.  Avoids crashing browser if too many are called in rapid succession.
+*  Added `bustCache` option to append dynamic querystring to tile URL to force refresh of tiles on every call.
+
+### v 0.1.6 - May 26, 2015
+*  Click function uses style.radius or radius function to do hittest.
+
 ### v 0.1.5 - May 21, 2015
 *  Added point onClick events
 
 
-### v 0.1.6 - May 26, 2015
-*  Click function uses style.radius or radius function to do hittest.
+
 
 ## Examples
 
