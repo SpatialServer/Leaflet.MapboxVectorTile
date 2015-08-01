@@ -12,7 +12,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     url: "", //URL TO Vector Tile Source,
     getIDForLayerFeature: function() {},
     tileSize: 256,
-    visibleLayers: []
+    visibleLayers: null
   },
   layers: {}, //Keep a list of the layers contained in the PBFs
   processedTiles: {}, //Keep a list of tiles that have been processed already
@@ -83,7 +83,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
      */
     this.zIndex = options.zIndex;
 
-    if (typeof options.style === 'function') {
+    if (typeof options.style === 'function' || typeof options.style === 'object') {
       this.style = options.style;
     }
 
@@ -212,9 +212,14 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
         var arrayBuffer = new Uint8Array(xhr.response);
         var buf = new Protobuf(arrayBuffer);
         var vt = new VectorTile(buf);
-        //Check the current map layer zoom.  If fast zooming is occurring, then short circuit tiles that are for a different zoom level than we're currently on.
-        if(self.map && self.map.getZoom() != ctx.zoom) {
-          console.log("Fetched tile for zoom level " + ctx.zoom + ". Map is at zoom level " + self._map.getZoom());
+        // Check the attachment status of the layer.
+        if (!self.map) {
+          console.log("Fetched tile for removed map.");
+          return;
+        }
+        // Check the current map layer zoom.  If fast zooming is occurring, then short circuit tiles that are for a different zoom level than we're currently on.
+        if (self.map.getZoom() != ctx.zoom) {
+          console.log("Fetched tile for zoom level " + ctx.zoom + ". Map is at zoom level " + self.map.getZoom());
           return;
         }
         self.checkVectorTileLayers(parseVT(vt), ctx);
@@ -247,19 +252,23 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     var self = this;
 
     //Check if there are specified visible layers
-    if(self.options.visibleLayers && self.options.visibleLayers.length > 0){
-      //only let thru the layers listed in the visibleLayers array
-      for(var i=0; i < self.options.visibleLayers.length; i++){
-        var layerName = self.options.visibleLayers[i];
-        if(vt.layers[layerName]){
-           //Proceed with parsing
-          self.prepareMVTLayers(vt.layers[layerName], layerName, ctx, parsed);
-        }
+    var visibleLayers = self.options.visibleLayers;
+    if (!visibleLayers) {
+      visibleLayers = Object.keys(vt.layers);
+    }
+
+    var layerMapping = visibleLayers;
+    if (Array.isArray(visibleLayers)) {
+      layerMapping = {};
+      for (var i=0; i < visibleLayers.length; i++) {
+        layerMapping[visibleLayers[i]] = visibleLayers[i];
       }
-    }else{
-      //Parse all vt.layers
-      for (var key in vt.layers) {
-        self.prepareMVTLayers(vt.layers[key], key, ctx, parsed);
+    }
+
+    for (var key in layerMapping) {
+      var lyr = vt.layers[layerMapping[key]];
+      if (lyr) {
+        self.prepareMVTLayers(lyr, key, ctx, parsed);
       }
     }
   },
@@ -291,11 +300,16 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
       getIDForLayerFeature = Util.getIDForLayerFeature;
     }
 
+    var style = self.style;
+    if (typeof style === 'object') {
+      style = style[key];
+    }
+
     var options = {
       getIDForLayerFeature: getIDForLayerFeature,
       filter: self.options.filter,
       layerOrdering: self.options.layerOrdering,
-      style: self.style,
+      style: style,
       name: key,
       asynch: true
     };
@@ -317,8 +331,13 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   hideLayer: function(id) {
     if (this.layers[id]) {
       this._map.removeLayer(this.layers[id]);
-      if(this.options.visibleLayers.indexOf("id") > -1){
-        this.visibleLayers.splice(this.options.visibleLayers.indexOf("id"), 1);
+      var visibleLayers = this.options.visibleLayers;
+      if (visibleLayers) {
+        if (Array.isArray(visibleLayers) && visibleLayers.indexOf(id) > -1) {
+          visibleLayers.splice(visibleLayers.indexOf(id), 1);
+        } else {
+          delete visibleLayers[id];
+        }
       }
     }
   },
@@ -326,8 +345,13 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   showLayer: function(id) {
     if (this.layers[id]) {
       this._map.addLayer(this.layers[id]);
-      if(this.options.visibleLayers.indexOf("id") == -1){
-        this.visibleLayers.push(id);
+      var visibleLayers = this.options.visibleLayers;
+      if (visibleLayers) {
+        if (Array.isArray(visibleLayers)) {
+          visibleLayers.push(id);
+        } else {
+          visibleLayers[id] = id;
+        }
       }
     }
     //Make sure manager layer is always in front
@@ -343,11 +367,14 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   },
 
   addChildLayers: function(map) {
-    var self = this;
-    if(self.options.visibleLayers.length > 0){
-      //only let thru the layers listed in the visibleLayers array
-      for(var i=0; i < self.options.visibleLayers.length; i++){
-        var layerName = self.options.visibleLayers[i];
+    var visibleLayers = this.visibleLayers;
+    if (visibleLayers) {
+      //only let thru the layers listed in the visibleLayers array or object
+      if (!Array.isArray(visibleLayers)) {
+        visibleLayers = Object.keys(visibleLayers);
+      }
+      for(var i=0; i < visibleLayers.length; i++){
+        var layerName = visibleLayers[i];
         var layer = this.layers[layerName];
         if(layer){
           //Proceed with parsing
