@@ -46,9 +46,10 @@ function DynamicLabel(map, pbfSource, options) {
   this.activeTiles = {};
 
   this._determineActiveTiles();
+  this.map.on('move', this._determineActiveTiles, this);
   var self = this;
-  this.map.on('move', function() {
-    self._determineActiveTiles();
+  pbfSource.on('remove', function() {
+    self.map.off('move', self._determineActiveTiles, self);
   });
 
 }

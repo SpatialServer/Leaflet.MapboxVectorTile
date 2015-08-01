@@ -38,16 +38,17 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
   //Add to the collection
   this.addTileFeature(vtf, ctx);
 
+  this.map.on('zoomend', this.removeLabel, this);
   var self = this;
-  this.map.on('zoomend', function() {
-    self.staticLabel = null;
+  mvtLayer.on('remove', function() {
+    self.map.off('zoomend', self.removeLabel, self);
   });
 
   if (style && style.dynamicLabel && typeof style.dynamicLabel === 'function') {
     this.dynamicLabel = this.mvtSource.dynamicLabel.createFeature(this);
   }
 
-  ajax(self);
+  ajax(this);
 }
 
 
