@@ -87,7 +87,7 @@ function ajaxCallback(self, response) {
   }
 
   self._setStyle(self.mvtLayer.style);
-  redrawTiles(self);
+  this.redraw();
 }
 
 MVTFeature.prototype._setStyle = function(styleFn) {
@@ -195,20 +195,15 @@ MVTFeature.prototype.clearTileFeatures = function(zoom) {
 /**
  * Redraws all of the tiles associated with a feature. Useful for
  * style change and toggling.
- *
- * @param self
  */
-function redrawTiles(self) {
+MVTFeature.prototype.redraw = function() {
   //Redraw the whole tile, not just this vtf
-  var tiles = self.tiles;
-  var mvtLayer = self.mvtLayer;
-
-  for (var id in tiles) {
+  for (var id in this.tiles) {
     var tileZoom = parseInt(id.split(':')[0]);
-    var mapZoom = self.map.getZoom();
+    var mapZoom = this.map.getZoom();
     if (tileZoom === mapZoom) {
       //Redraw the tile
-      mvtLayer.redrawTile(id);
+      this.mvtLayer.redrawTile(id);
     }
   }
 }
@@ -224,7 +219,7 @@ MVTFeature.prototype.toggle = function() {
 MVTFeature.prototype.select = function() {
   this.selected = true;
   this.mvtSource.featureSelected(this);
-  redrawTiles(this);
+  this.redraw();
   var linkedFeature = this.linkedFeature();
   if (linkedFeature && linkedFeature.staticLabel && !linkedFeature.staticLabel.selected) {
     linkedFeature.staticLabel.select();
@@ -234,7 +229,7 @@ MVTFeature.prototype.select = function() {
 MVTFeature.prototype.deselect = function() {
   this.selected = false;
   this.mvtSource.featureDeselected(this);
-  redrawTiles(this);
+  this.redraw();
   var linkedFeature = this.linkedFeature();
   if (linkedFeature && linkedFeature.staticLabel && linkedFeature.staticLabel.selected) {
     linkedFeature.staticLabel.deselect();
