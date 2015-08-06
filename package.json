@@ -50,9 +50,9 @@
   },
   "scripts": {
     "start": "npm run watch & serve",
-    "watch": "watchify -v -d src/MVTSource.js -o dist/Leaflet.MapboxVectorTile.js",
-    "build": "browserify -d src/MVTSource.js -o dist/Leaflet.MapboxVectorTile.js",
-    "production": "browserify -d src/MVTSource.js | uglifyjs -m -c > dist/Leaflet.MapboxVectorTile.min.js",
+    "watch": "watchify -v -d src/index.js -o dist/Leaflet.MapboxVectorTile.js",
+    "build": "browserify -d src/index.js -o dist/Leaflet.MapboxVectorTile.js",
+    "production": "browserify -d src/index.js | uglifyjs -m -c --comments > dist/Leaflet.MapboxVectorTile.min.js",
     "test": "testling | faucet"
   }
 }
