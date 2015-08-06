@@ -13,5 +13,8 @@
     "README.md",
     "package.json",
     "bower.json"
-  ]
+  ],
+  "dependencies": {
+    "leaflet": "~0.7.3"
+  }
 }
