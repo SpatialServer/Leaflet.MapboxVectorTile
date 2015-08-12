@@ -166,7 +166,6 @@ module.exports = L.TileLayer.Canvas.extend({
     var features = vtl.parsedFeatures;
     for (var i = 0, len = features.length; i < len; i++) {
       var vtf = features[i]; //vector tile feature
-      vtf.layer = vtl;
 
       /**
        * Apply filter on feature if there is one. Defined in the options object
