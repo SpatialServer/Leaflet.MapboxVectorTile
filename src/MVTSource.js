@@ -69,9 +69,6 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     // tiles currently in the viewport
     this.activeTiles = {};
 
-    // thats that have been loaded and drawn
-    this.loadedTiles = {};
-
     this._url = this.options.url;
 
     /**
@@ -211,7 +208,6 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
           return;
         }
         self.checkVectorTileLayers(parseVT(vt), ctx);
-        tileLoaded(self, ctx);
       }
 
       //either way, reduce the count of tilesToProcess tiles here
@@ -493,10 +489,6 @@ function getTileURL(lat, lon, zoom) {
   var xtile = parseInt(Math.floor( (lon + 180) / 360 * (1<<zoom) ));
   var ytile = parseInt(Math.floor( (1 - Math.log(Math.tan(lat.toRad()) + 1 / Math.cos(lat.toRad())) / Math.PI) / 2 * (1<<zoom) ));
   return "" + zoom + ":" + xtile + ":" + ytile;
-}
-
-function tileLoaded(pbfSource, ctx) {
-  pbfSource.loadedTiles[ctx.id] = ctx;
 }
 
 function parseVT(vt){
