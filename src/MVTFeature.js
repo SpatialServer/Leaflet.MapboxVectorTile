@@ -41,10 +41,10 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
   //Add to the collection
   this.addTileFeature(vtf, ctx);
 
-  this.map.on('zoomend', this.removeLabel, this);
+  this.map.on('zoomend', this._zoomend, this);
   var self = this;
   mvtLayer.on('remove', function() {
-    self.map.off('zoomend', self.removeLabel, self);
+    self.map.off('zoomend', self._zoomend, self);
   });
 
   if (style && style.dynamicLabel && typeof style.dynamicLabel === 'function') {
@@ -172,8 +172,6 @@ MVTFeature.prototype.addTileFeature = function(vtf, ctx) {
   var zoom = this.map.getZoom();
 
   if(ctx.zoom != zoom) return;
-
-  this.clearTileFeatures(zoom); //TODO: This iterates thru all tiles every time a new tile is added.  Figure out a better way to do this.
 
   this.tiles[ctx.id] = {
     ctx: ctx,
@@ -393,6 +391,11 @@ MVTFeature.prototype.removeLabel = function() {
   if (!this.staticLabel) return;
   this.staticLabel.remove();
   this.staticLabel = null;
+};
+
+MVTFeature.prototype._zoomend = function() {
+  this.removeLabel();
+  this.clearTileFeatures(this.map.getZoom());
 };
 
 /**
