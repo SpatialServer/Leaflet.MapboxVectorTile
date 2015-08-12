@@ -125,6 +125,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     this.removeChildLayers(map);
     map.off('click', this._onClick, this);
     L.TileLayer.Canvas.prototype.onRemove.call(this, map);
+    this.map = null;
   },
 
   drawTile: function(canvas, tilePoint, zoom) {
