@@ -12,7 +12,10 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
 
   // Apply all of the properties of vtf to this object.
   for (var key in vtf) {
-    this[key] = vtf[key];
+    // Ignore private fields.
+    if (key.charAt(0) !== '_') {
+      this[key] = vtf[key];
+    }
   }
 
   this.mvtLayer = mvtLayer;
