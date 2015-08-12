@@ -69,9 +69,6 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     // tiles currently in the viewport
     this.activeTiles = {};
 
-    // thats that have been loaded and drawn
-    this.loadedTiles = {};
-
     this._url = this.options.url;
 
     /**
@@ -108,31 +105,24 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   },
 
   onAdd: function(map) {
-    var self = this;
-    self.map = map;
+    this.map = map;
     L.TileLayer.Canvas.prototype.onAdd.call(this, map);
 
-    var mapOnClickCallback = function(e) {
-      self._onClick(e);
-    };
+    map.on('click', this._onClick, this);
 
-    map.on('click', mapOnClickCallback);
-
-    map.on("layerremove", function(e) {
-      // check to see if the layer removed is this one
-      // call a method to remove the child layers (the ones that actually have something drawn on them).
-      if (e.layer._leaflet_id === self._leaflet_id && e.layer.removeChildLayers) {
-        e.layer.removeChildLayers(map);
-        map.off('click', mapOnClickCallback);
-      }
-    });
-
-    self.addChildLayers(map);
+    this.addChildLayers(map);
 
     if (typeof DynamicLabel === 'function' ) {
       this.dynamicLabel = new DynamicLabel(map, this, {});
     }
+  },
 
+  onRemove: function(map) {
+    this.fire('remove');
+    this.removeChildLayers(map);
+    map.off('click', this._onClick, this);
+    L.TileLayer.Canvas.prototype.onRemove.call(this, map);
+    this.map = null;
   },
 
   drawTile: function(canvas, tilePoint, zoom) {
@@ -218,7 +208,6 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
           return;
         }
         self.checkVectorTileLayers(parseVT(vt), ctx);
-        tileLoaded(self, ctx);
       }
 
       //either way, reduce the count of tilesToProcess tiles here
@@ -500,10 +489,6 @@ function getTileURL(lat, lon, zoom) {
   var xtile = parseInt(Math.floor( (lon + 180) / 360 * (1<<zoom) ));
   var ytile = parseInt(Math.floor( (1 - Math.log(Math.tan(lat.toRad()) + 1 / Math.cos(lat.toRad())) / Math.PI) / 2 * (1<<zoom) ));
   return "" + zoom + ":" + xtile + ":" + ytile;
-}
-
-function tileLoaded(pbfSource, ctx) {
-  pbfSource.loadedTiles[ctx.id] = ctx;
 }
 
 function parseVT(vt){
