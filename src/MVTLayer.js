@@ -4,6 +4,7 @@
 /** Forked from https://gist.github.com/DGuidi/1716010 **/
 var MVTFeature = require('./MVTFeature');
 var Util = require('./MVTUtil');
+var rbush = require('rbush');
 
 module.exports = L.TileLayer.Canvas.extend({
 
@@ -103,9 +104,11 @@ module.exports = L.TileLayer.Canvas.extend({
   },
 
   _initializeFeaturesHash: function(ctx){
-    this._canvasIDToFeatures[ctx.id] = {};
-    this._canvasIDToFeatures[ctx.id].features = [];
-    this._canvasIDToFeatures[ctx.id].canvas = ctx.canvas;
+    this._canvasIDToFeatures[ctx.id] = {
+      features: [],
+      canvas: ctx.canvas,
+      index: rbush(9)
+    };
   },
 
   _draw: function(ctx) {
@@ -154,8 +157,6 @@ module.exports = L.TileLayer.Canvas.extend({
     //See if we can pluck the child tile from this PBF tile layer based on the master layer's tile id.
     layerCtx.canvas = self._tiles[tilePoint.x + ":" + tilePoint.y];
 
-
-
     //Initialize this tile's feature storage hash, if it hasn't already been created.  Used for when filters are updated, and features are cleared to prepare for a fresh redraw.
     if (!this._canvasIDToFeatures[layerCtx.id]) {
       this._initializeFeaturesHash(layerCtx);
@@ -165,6 +166,7 @@ module.exports = L.TileLayer.Canvas.extend({
     }
 
     var features = vtl.parsedFeatures;
+    var toIndex = [];
     for (var i = 0, len = features.length; i < len; i++) {
       var vtf = features[i]; //vector tile feature
       vtf.layer = vtl;
@@ -186,6 +188,12 @@ module.exports = L.TileLayer.Canvas.extend({
       }
       var uniqueID = self.options.getIDForLayerFeature(vtf) || i;
       var mvtFeature = self.features[uniqueID];
+
+      /**
+       * Index the feature by bounding box into rbush.
+       */
+      var box = bbox(vtf, layerCtx.tileSize, uniqueID);
+      toIndex.push(box);
 
       /**
        * Use layerOrdering function to apply a zIndex property to each vtf.  This is defined in
@@ -212,9 +220,10 @@ module.exports = L.TileLayer.Canvas.extend({
       }
 
       //Associate & Save this feature with this tile for later
-      if(layerCtx && layerCtx.id) self._canvasIDToFeatures[layerCtx.id]['features'].push(mvtFeature);
+      self._canvasIDToFeatures[layerCtx.id].features.push(mvtFeature);
 
     }
+    self._canvasIDToFeatures[layerCtx.id].index.load(toIndex);
 
     /**
      * Apply sorting (zIndex) on feature if there is a function defined in the options object
@@ -287,25 +296,22 @@ module.exports = L.TileLayer.Canvas.extend({
     this.setLowestCount(count);
   },
 
-  //This is the old way.  It works, but is slow for mouseover events.  Fine for click events.
-  handleClickEvent: function(evt, cb) {
-    //Click happened on the GroupLayer (Manager) and passed it here
-    var tileID = evt.tileID.split(":").slice(1, 3).join(":");
-    var zoom = evt.tileID.split(":")[0];
-    var canvas = this._tiles[tileID];
-    if(!canvas) (cb(evt)); //break out
-    var x = evt.layerPoint.x - canvas._leaflet_pos.x;
-    var y = evt.layerPoint.y - canvas._leaflet_pos.y;
+  featureAt: function(tileID, tilePixelPoint) {
+    if (!this._canvasIDToFeatures[tileID]) return null; // break out
 
-    var tilePoint = {x: x, y: y};
-    var features = this._canvasIDToFeatures[evt.tileID].features;
+    var zoom = tileID.split(":")[0];
+    var x = tilePixelPoint.x;
+    var y = tilePixelPoint.y;
+
+    var index = this._canvasIDToFeatures[tileID].index;
 
     var minDistance = Number.POSITIVE_INFINITY;
     var nearest = null;
     var j, paths, distance;
 
-    for (var i = 0; i < features.length; i++) {
-      var feature = features[i];
+    var matches = index.search([x, y, x, y]);
+    for (var i = 0; i < matches.length; i++) {
+      var feature = this.features[matches[i].id];
       switch (feature.type) {
 
         case 1: //Point - currently rendered as circular paths.  Intersect with that.
@@ -319,7 +325,7 @@ module.exports = L.TileLayer.Canvas.extend({
             radius = feature.style.radius;
           }
 
-          paths = feature.getPathsForTile(evt.tileID);
+          paths = feature.getPathsForTile(tileID);
           for (j = 0; j < paths.length; j++) {
             //Builds a circle of radius feature.style.radius (assuming circular point symbology).
             if(in_circle(paths[j][0].x, paths[j][0].y, radius, x, y)){
@@ -330,10 +336,10 @@ module.exports = L.TileLayer.Canvas.extend({
           break;
 
         case 2: //LineString
-          paths = feature.getPathsForTile(evt.tileID);
+          paths = feature.getPathsForTile(tileID);
           for (j = 0; j < paths.length; j++) {
             if (feature.style) {
-              var distance = this._getDistanceFromLine(tilePoint, paths[j]);
+              var distance = this._getDistanceFromLine(tilePixelPoint, paths[j]);
               var thickness = (feature.selected && feature.style.selected ? feature.style.selected.size : feature.style.size);
               if (distance < thickness / 2 + this.options.lineClickTolerance && distance < minDistance) {
                 nearest = feature;
@@ -344,9 +350,9 @@ module.exports = L.TileLayer.Canvas.extend({
           break;
 
         case 3: //Polygon
-          paths = feature.getPathsForTile(evt.tileID);
+          paths = feature.getPathsForTile(tileID);
           for (j = 0; j < paths.length; j++) {
-            if (this._isPointInPoly(tilePoint, paths[j])) {
+            if (this._isPointInPoly(tilePixelPoint, paths[j])) {
               nearest = feature;
               minDistance = 0; // point is inside the polygon, so distance is zero
             }
@@ -356,11 +362,7 @@ module.exports = L.TileLayer.Canvas.extend({
       if (minDistance == 0) break;
     }
 
-    if (nearest && nearest.toggleEnabled) {
-        nearest.toggle();
-    }
-    evt.feature = nearest;
-    cb(evt);
+    return nearest;
   },
 
   clearTile: function(id) {
@@ -377,8 +379,10 @@ module.exports = L.TileLayer.Canvas.extend({
     context.clearRect(0, 0, canvas.width, canvas.height);
   },
 
-  clearTileFeatureHash: function(canvasID){
-    this._canvasIDToFeatures[canvasID] = { features: []}; //Get rid of all saved features
+  clearTileFeatureHash: function(canvasID) {
+    // Get rid of all saved features
+    this._canvasIDToFeatures[canvasID].features = [];
+    this._canvasIDToFeatures[canvasID].index = rbush(9);
   },
 
   clearLayerFeatureHash: function(){
@@ -420,14 +424,6 @@ module.exports = L.TileLayer.Canvas.extend({
     }
   },
 
-  _resetCanvasIDToFeatures: function(canvasID, canvas) {
-
-    this._canvasIDToFeatures[canvasID] = {};
-    this._canvasIDToFeatures[canvasID].features = [];
-    this._canvasIDToFeatures[canvasID].canvas = canvas;
-
-  },
-
   linkedLayer: function() {
     if(this.mvtSource.layerLink) {
       var linkName = this.mvtSource.layerLink(this.name);
@@ -443,6 +439,29 @@ module.exports = L.TileLayer.Canvas.extend({
   }
 
 });
+
+function bbox(vtf, tileSize, id) {
+  var divisor = vtf.extent / tileSize;
+
+  var minX = Number.POSITIVE_INFINITY;
+  var maxX = Number.NEGATIVE_INFINITY;
+  var minY = Number.POSITIVE_INFINITY;
+  var maxY = Number.NEGATIVE_INFINITY;
+  vtf.coordinates.forEach(function(coordinates) {
+    coordinates.forEach(function(coordinate) {
+      var x = coordinate.x / divisor;
+      var y = coordinate.y / divisor;
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+    });
+  });
+
+  var box = [minX, minY, maxX, maxY];
+  box.id = id;
+  return box;
+}
 
 
 function removeLabels(self) {

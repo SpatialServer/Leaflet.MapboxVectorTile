@@ -397,6 +397,28 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     this._eventHandlers[eventType] = callback;
   },
 
+  featureAtLatLng: function(latlng) {
+    return this.featureAtContainerPoint(this.map.latLngToContainerPoint(latlng));
+  },
+
+  featureAtContainerPoint: function(containerPoint) {
+    return this._featureAt(containerPoint, this.layers);
+  },
+
+  _featureAt: function(containerPoint, layers) {
+    var tilePoint = this._getTilePoint(containerPoint);
+
+    // TODO: Z-ordering?  Clickable?
+    for (var key in layers) {
+      var layer = layers[key];
+      var feature = layer.featureAt(tilePoint.tileID, tilePoint);
+      if (feature) {
+        return feature;
+      }
+    }
+    return null;
+  },
+
   _onClick: function(evt) {
     //Here, pass the event on to the child MVTLayer and have it do the hit test and handle the result.
     var self = this;
@@ -404,33 +426,28 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     var clickableLayers = self.options.clickableLayers;
     var layers = self.layers;
 
-    evt.tileID =  getTileURL(evt.latlng.lat, evt.latlng.lng, this.map.getZoom());
-
     // We must have an array of clickable layers, otherwise, we just pass
     // the event to the public onClick callback in options.
-
-    if(!clickableLayers){
-      clickableLayers = Object.keys(self.layers);
-    }
-
-    if (clickableLayers && clickableLayers.length > 0) {
+    if (clickableLayers) {
+      layers = {};
       for (var i = 0, len = clickableLayers.length; i < len; i++) {
         var key = clickableLayers[i];
-        var layer = layers[key];
+        var layer = self.layers[key];
         if (layer) {
-          layer.handleClickEvent(evt, function(evt) {
-            if (typeof onClick === 'function') {
-              onClick(evt);
-            }
-          });
+          layers[key] = layer;
         }
-      }
-    } else {
-      if (typeof onClick === 'function') {
-        onClick(evt);
       }
     }
 
+    var feature = this._featureAt(evt.layerPoint, layers);
+    if (feature && feature.toggleEnabled) {
+      feature.toggle();
+    }
+
+    evt.feature = feature;
+    if (typeof onClick === 'function') {
+      onClick(evt);
+    }
   },
 
   setFilter: function(filterFunction, layerName) {
@@ -512,6 +529,17 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
       onTilesLoaded(this);
     }
     self._triggerOnTilesLoadedEvent = true; //reset - if redraw() is called with the optinal 'false' parameter to temporarily disable the onTilesLoaded event from firing.  This resets it back to true after a single time of firing as 'false'.
+  },
+
+  _getTilePoint: function(containerPoint) {
+    var tileSize = this.options.tileSize;
+    var globalPoint = this.map.containerPointToLayerPoint(containerPoint)
+      .add(this.map.getPixelOrigin());
+
+    var tileIndexPoint = globalPoint.divideBy(tileSize).floor();
+    var tilePoint = globalPoint.subtract(tileIndexPoint.multiplyBy(tileSize));
+    tilePoint.tileID = "" + this.map.getZoom() + ":" + tileIndexPoint.x + ":" + tileIndexPoint.y;
+    return tilePoint;
   }
 
 });
@@ -521,12 +549,6 @@ if (typeof(Number.prototype.toRad) === "undefined") {
   Number.prototype.toRad = function() {
     return this * Math.PI / 180;
   }
-}
-
-function getTileURL(lat, lon, zoom) {
-  var xtile = parseInt(Math.floor( (lon + 180) / 360 * (1<<zoom) ));
-  var ytile = parseInt(Math.floor( (1 - Math.log(Math.tan(lat.toRad()) + 1 / Math.cos(lat.toRad())) / Math.PI) / 2 * (1<<zoom) ));
-  return "" + zoom + ":" + xtile + ":" + ytile;
 }
 
 function tileLoaded(pbfSource, ctx) {

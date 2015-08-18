@@ -156,8 +156,12 @@ MVTFeature.prototype.draw = function(canvasID) {
 };
 
 MVTFeature.prototype.getPathsForTile = function(canvasID) {
-  //Get the info from the parts list
-  return this.tiles[canvasID].paths;
+  var tile = this.tiles[canvasID];
+  if (tile) {
+    return tile.paths;
+  } else {
+    return [];
+  }
 };
 
 MVTFeature.prototype.addTileFeature = function(vtf, ctx) {
