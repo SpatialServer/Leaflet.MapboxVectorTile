@@ -60,7 +60,7 @@ filter: function(feature, context) {
 ```
 
 * `style` - **{function}** This function sets properties that the HTML5 Canvas' context uses to draw on the map. If you do not specify this, default styling will be applied to your features. `style.selected` parameters specify how a feature looks when it is selected. **Optional**.
-  * *@returns {object}* 
+  * *@returns {object}*
 
 ```js
 style: function (feature) {
@@ -147,3 +147,11 @@ onClick: function(evt) {
 ```
 
 * 'scope' - **{object}** The execution context for the onClick callback
+
+* 'xhrHeaders' - **{object}** The header and value to set on the XMLHttpRequest when fetching tiles.
+
+```json
+{
+  "Authorization": "xxxxxxxxxxx"
+}
+```
