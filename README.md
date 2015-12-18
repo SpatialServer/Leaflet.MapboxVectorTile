@@ -20,6 +20,9 @@ Take a look at this [short presentation](https://speakerdeck.com/hallahan/leafle
 ### v 0.1.6 - May 26, 2015
 *  Click function uses style.radius or radius function to do hittest.
 
+### v 0.1.7 - December 17, 2015
+*  Add XHR Headers to be configured for tile requests, update dependencies, correct package.json "main" property.
+
 ## Examples
 
 [Basic Usage](http://spatialserver.github.io/Leaflet.MapboxVectorTile/examples/basic.html)
