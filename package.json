@@ -2,7 +2,7 @@
   "name": "leaflet-mapbox-vector-tile",
   "version": "0.1.6",
   "description": "A Leaflet Plugin that renders Mapbox Vector Tiles on HTML5 Canvas.",
-  "main": "index.js",
+  "main": "src/index.js",
   "repository": {
     "type": "git",
     "url": "git://github.com/SpatialServer/Leaflet.MapboxVectorTile.git"
