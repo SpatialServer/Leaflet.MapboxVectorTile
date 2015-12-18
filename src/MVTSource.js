@@ -12,7 +12,8 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     url: "", //URL TO Vector Tile Source,
     getIDForLayerFeature: function() {},
     tileSize: 256,
-    visibleLayers: []
+    visibleLayers: [],
+    xhrHeaders: {}
   },
   layers: {}, //Keep a list of the layers contained in the PBFs
   processedTiles: {}, //Keep a list of tiles that have been processed already
@@ -230,6 +231,10 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
     };
 
     xhr.open('GET', src, true); //async is true
+    var headers = self.options.xhrHeaders;
+    for (var header in headers) {
+      xhr.setRequestHeader(header, headers[header])
+    }
     xhr.responseType = 'arraybuffer';
     xhr.send();
   },
