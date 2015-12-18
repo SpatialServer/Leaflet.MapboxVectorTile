@@ -38,9 +38,16 @@ function init(self, mvtFeature, ctx, latLng, style) {
     self.marker._icon.classList.add(self.style.cssSelectedClass || 'label-icon-text-selected');
   }
 
-  self.marker.on('click', self.toggle, self);
+  self.marker.on('click', function(e) {
+    self.toggle();
+  });
 
-  self.map.on('zoomend', this._onZoomEnd, this);
+  self.map.on('zoomend', function(e) {
+    var newZoom = e.target.getZoom();
+    if (self.zoom !== newZoom) {
+      self.map.removeLayer(self.marker);
+    }
+  });
 }
 
 
@@ -68,13 +75,5 @@ StaticLabel.prototype.deselect = function() {
 
 StaticLabel.prototype.remove = function() {
   if (!this.map || !this.marker) return;
-  this.map.off('zoomend', this._onZoomEnd, this);
   this.map.removeLayer(this.marker);
 };
-
-StaticLabel.prototype._onZoomEnd = function() {
-  var newZoom = e.target.getZoom();
-  if (this.zoom !== newZoom) {
-    this.remove();
-  }
-}

@@ -12,10 +12,7 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
 
   // Apply all of the properties of vtf to this object.
   for (var key in vtf) {
-    // Ignore private fields.
-    if (key.charAt(0) !== '_') {
-      this[key] = vtf[key];
-    }
+    this[key] = vtf[key];
   }
 
   this.mvtLayer = mvtLayer;
@@ -41,17 +38,16 @@ function MVTFeature(mvtLayer, vtf, ctx, id, style) {
   //Add to the collection
   this.addTileFeature(vtf, ctx);
 
-  this.map.on('zoomend', this._zoomend, this);
   var self = this;
-  mvtLayer.on('remove', function() {
-    self.map.off('zoomend', self._zoomend, self);
+  this.map.on('zoomend', function() {
+    self.staticLabel = null;
   });
 
   if (style && style.dynamicLabel && typeof style.dynamicLabel === 'function') {
     this.dynamicLabel = this.mvtSource.dynamicLabel.createFeature(this);
   }
 
-  ajax(this);
+  ajax(self);
 }
 
 
@@ -172,6 +168,8 @@ MVTFeature.prototype.addTileFeature = function(vtf, ctx) {
   var zoom = this.map.getZoom();
 
   if(ctx.zoom != zoom) return;
+
+  this.clearTileFeatures(zoom); //TODO: This iterates thru all tiles every time a new tile is added.  Figure out a better way to do this.
 
   this.tiles[ctx.id] = {
     ctx: ctx,
@@ -391,11 +389,6 @@ MVTFeature.prototype.removeLabel = function() {
   if (!this.staticLabel) return;
   this.staticLabel.remove();
   this.staticLabel = null;
-};
-
-MVTFeature.prototype._zoomend = function() {
-  this.removeLabel();
-  this.clearTileFeatures(this.map.getZoom());
 };
 
 /**
