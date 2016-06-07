@@ -189,6 +189,15 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   },
 
   _draw: function(ctx) {
+    _fetchVectorTileXHR(ctx);
+  },
+
+  _vectorTileLoaded: function(ctx, vt) {
+    this.checkVectorTileLayers(parseVT(vt), ctx);
+    tileLoaded(this, ctx);
+  }
+
+  _fetchVectorTileXHR: function(ctx) {
     var self = this;
 
 //    //This works to skip fetching and processing tiles if they've already been processed.
@@ -218,8 +227,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
           console.log("Fetched tile for zoom level " + ctx.zoom + ". Map is at zoom level " + self._map.getZoom());
           return;
         }
-        self.checkVectorTileLayers(parseVT(vt), ctx);
-        tileLoaded(self, ctx);
+        _vectorTileLoaded(vt, ctx);
       }
 
       //either way, reduce the count of tilesToProcess tiles here
