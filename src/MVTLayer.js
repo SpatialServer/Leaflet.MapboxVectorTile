@@ -184,7 +184,7 @@ module.exports = L.TileLayer.Canvas.extend({
       } else {
         getIDForLayerFeature = Util.getIDForLayerFeature;
       }
-      var uniqueID = self.options.getIDForLayerFeature(vtf) || i;
+      var uniqueID = getIDForLayerFeature(vtf) || i;
       var mvtFeature = self.features[uniqueID];
 
       /**
