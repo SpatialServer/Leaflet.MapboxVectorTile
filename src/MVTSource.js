@@ -479,8 +479,11 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   _pbfLoaded: function() {
     //Fires when all tiles from this layer have been loaded and drawn (or 404'd).
 
-    //Make sure manager layer is always in front
-    this.bringToFront();
+    //Make sure layer is still added to a map
+    if (this._map) {
+      //Make sure manager layer is always in front
+      this.bringToFront();
+    }
 
     //See if there is an event to execute
     var self = this;
