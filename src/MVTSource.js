@@ -9,6 +9,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
   options: {
     debug: false,
+    tms: false,
     url: "", //URL TO Vector Tile Source,
     getIDForLayerFeature: function() {},
     tileSize: 256,
@@ -202,7 +203,12 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 //    }
 
     if (!this._url) return;
-    var src = this.getTileUrl({ x: ctx.tile.x, y: ctx.tile.y, z: ctx.zoom });
+    var src = this.getTileUrl({
+      x: ctx.tile.x,
+      //reference: https://gist.github.com/tmcw/4954720
+      y: this.options.tms ? this._getWrapTileNum().y-ctx.tile.y-1 : ctx.tile.y,
+      z: ctx.zoom
+    });
 
     var xhr = new XMLHttpRequest();
     xhr.onload = function() {
