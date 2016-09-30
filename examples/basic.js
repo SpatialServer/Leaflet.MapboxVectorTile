@@ -7,25 +7,20 @@ L.tileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery
   id: 'examples.map-i86knfo3'
 }).addTo(map);
 
+var layer = 'fenix:gaul0_faostat3_3857',
+    url = 'http://fenix.fao.org:20900/geoserver/gwc/service/tms/1.0.0/'+layer+'/{z}/{x}/{y}.pbf';
+
 
 var mvtSource = new L.TileLayer.MVTSource({
-  url: "http://spatialserver.spatialdev.com/services/vector-tiles/GAUL_FSP/{z}/{x}/{y}.pbf",
+  //url: "http://spatialserver.spatialdev.com/services/vector-tiles/GAUL_FSP/{z}/{x}/{y}.pbf",
+  url: url,
   debug: true,
-  clickableLayers: ["GAUL0"],
-  getIDForLayerFeature: function(feature) {
+  //clickableLayers: ["GAUL0"],
+  /*getIDForLayerFeature: function(feature) {
     return feature.properties.id;
   },
 
-  /**
-   * The filter function gets called when iterating though each vector tile feature (vtf). You have access
-   * to every property associated with a given feature (the feature, and the layer). You can also filter
-   * based of the context (each tile that the feature is drawn onto).
-   *
-   * Returning false skips over the feature and it is not drawn.
-   *
-   * @param feature
-   * @returns {boolean}
-   */
+  
   filter: function(feature, context) {
     if (feature.layer.name === 'GAUL0') {
       return true;
@@ -71,6 +66,7 @@ var mvtSource = new L.TileLayer.MVTSource({
     }
     return style;
   }
+  //*/
 
 });
 debug.mvtSource = mvtSource;
