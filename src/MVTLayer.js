@@ -293,7 +293,11 @@ module.exports = L.TileLayer.Canvas.extend({
     var tileID = evt.tileID.split(":").slice(1, 3).join(":");
     var zoom = evt.tileID.split(":")[0];
     var canvas = this._tiles[tileID];
-    if(!canvas) (cb(evt)); //break out
+    if(!canvas) {
+      //break out
+      cb(evt);
+      return;
+    }
     var x = evt.layerPoint.x - canvas._leaflet_pos.x;
     var y = evt.layerPoint.y - canvas._leaflet_pos.y;
 
