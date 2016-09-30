@@ -3,7 +3,8 @@ var Protobuf = require('pbf');
 var Point = require('point-geometry');
 var Util = require('./MVTUtil');
 var MVTLayer = require('./MVTLayer');
-
+var geojsonvt = require('geojson-vt');
+var vtpbf = require('vt-pbf');
 
 module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
 
@@ -189,6 +190,36 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
   },
 
   _draw: function(ctx) {
+    if (this.options.geoJson) {
+      this._fetchVectorTileGeojsonVt(ctx);
+    } else {
+      this._fetchVectorTileXHR(ctx);
+    }
+  },
+
+  _vectorTileLoaded: function(ctx, vt) {
+    this.checkVectorTileLayers(parseVT(vt), ctx);
+    tileLoaded(this, ctx);
+  },
+
+  _fetchVectorTileGeojsonVt: function(ctx) {
+    var self = this;
+    if (!self._geojsonvtTileIndex) {
+      self._geojsonvtTileIndex = geojsonvt(self.options.geoJson);
+    }
+    // TODO: Timeout is neccessary because other operations depend on this being asynchronous
+    // 0ms timeout does not quite solve the problem, for reasons unknown.
+    window.setTimeout(function(){
+      var vectorTileJson = self._geojsonvtTileIndex.getTile(ctx.zoom, ctx.tile.x, ctx.tile.y);
+      if (vectorTileJson) {
+        var reformatted = vtpbf.fromGeojsonVt({ 'geojsonLayer': vectorTileJson });
+        self._vectorTileLoaded(ctx, new VectorTile(new Protobuf(reformatted)));
+        self.reduceTilesToProcessCount();
+      }
+    }, 5);
+  },
+
+  _fetchVectorTileXHR: function(ctx) {
     var self = this;
 
 //    //This works to skip fetching and processing tiles if they've already been processed.
@@ -218,8 +249,7 @@ module.exports = L.TileLayer.MVTSource = L.TileLayer.Canvas.extend({
           console.log("Fetched tile for zoom level " + ctx.zoom + ". Map is at zoom level " + self._map.getZoom());
           return;
         }
-        self.checkVectorTileLayers(parseVT(vt), ctx);
-        tileLoaded(self, ctx);
+        self._vectorTileLoaded(ctx, vt);
       }
 
       //either way, reduce the count of tilesToProcess tiles here
