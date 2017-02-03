@@ -357,8 +357,10 @@ MVTFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
   }
 
   ctx2d.closePath();
+  ctx2d.globalAlpha = style.fillOpacity || 1;
   ctx2d.fill();
-  if (outline) {
+  if (outline && outline.size !== 0) {
+    ctx2d.globalAlpha = style.opacity || 1;
     ctx2d.stroke();
   }
 
