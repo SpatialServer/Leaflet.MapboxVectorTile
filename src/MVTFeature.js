@@ -100,7 +100,8 @@ MVTFeature.prototype._setStyle = function(styleFn) {
 
 MVTFeature.prototype.setStyle = function(styleFn) {
   this.ajaxData = null;
-  this.style = styleFn(this, null);
+  // update or create new style object
+  this.style = L.Util.extend({}, this.style, styleFn(this, null));
   var hasAjaxSource = ajax(this);
   if (!hasAjaxSource) {
     // The label gets removed, and the (re)draw,
