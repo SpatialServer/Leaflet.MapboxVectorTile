@@ -348,7 +348,6 @@ MVTFeature.prototype._drawPolygon = function(ctx, coordsArray, style) {
     var coords = coordsArray[gidx];
 
     for (var i = 0; i < coords.length; i++) {
-      var coord = coords[i];
       var method = (i === 0 ? 'move' : 'line') + 'To';
       var proj = this._tilePoint(coords[i]);
       projCoords.push(proj);
